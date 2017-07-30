@@ -19,5 +19,21 @@ Artifact id:    taotao-parent
 
 还要继承父工程，同一个组，修改其pom，jar包从parent中找（版本号就不需要定义了）    
 
-5. ​
+5. 新建manager聚合pom工程，继承于parent  
+
+修改pom文件，依赖于common  
+
+在里面把pojo（jar），mapper，service，controller（war）聚合在一起   
+
+6. 创建四个模块  
+
+创建模块的方式：在聚合工程上新建maven module   
+
+pojo不依赖任何jar包  
+
+mapper配置需要的依赖  
+
+
+
+07-22min
 
