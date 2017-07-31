@@ -33,7 +33,33 @@ pojo不依赖任何jar包
 
 mapper配置需要的依赖  
 
+service设置依赖
 
+web（controller）使用的是war，设置依赖，因为结构不完整，所以会报错  
 
-07-22min
+（需要在src/main/webapp下创建WEB-INF/web.xml）  
 
+7. 运行测试  
+
+运行的对象是manager聚合工程，需要用到tomcat插件。所以要在manager的pom文件中配置tomcat插件  
+
+运行maven需要使用命令clean tomcat7:run
+
+（注意：要把taotao-parent&common安装到本地仓库）  
+
+### 2.使用svn  
+
+1. 新建仓库，选择创建简单的仓库结构  
+2. 开发过程一般在主干中开发，定板之后小修改才在分支上开发  
+3. 在eclipse中team-share-svn（leekoko6lyb）   
+
+选择文件上传到trunk上
+
+4. 选择要提交的内容进行提交
+
+把setting和.project   .classpath   target忽略掉 
+
+因为一些文件服务器不存在，所以不能忽略，需要先提交一部分才可以忽略  
+
+5. 冲突：因为本地和服务器上传后会冲突，所以需要右键进行更新再提交  
+6.   
