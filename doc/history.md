@@ -64,7 +64,9 @@ web（controller）使用的是war，设置依赖，因为结构不完整，所�
 5. 冲突：因为本地和服务器上传后会冲突，所以需要右键进行更新再提交  
 6. 可以从svn导入maven工程，在从存在的maven project导入manager项目，manager项目可以转化为maven项目  
 
-### 3.  
+### 3.创建数据库    
+
+数据表未导入，到02-10min
 
 
 
