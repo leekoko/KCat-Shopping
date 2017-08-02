@@ -64,9 +64,42 @@ web（controller）使用的是war，设置依赖，因为结构不完整，所�
 5. 冲突：因为本地和服务器上传后会冲突，所以需要右键进行更新再提交  
 6. 可以从svn导入maven工程，在从存在的maven project导入manager项目，manager项目可以转化为maven项目  
 
-### 3.创建数据库    
+### 3.创建数据库      
 
-数据表未导入，到02-10min
+#### 1.逆向工程    
+
+导进逆向工程，配置数据库信息，指定生成po类/接口/映射文件的位置，放在哪个包，指定哪个表（再次生成需要先删掉旧代码）  
+
+将生成的mapper/pojo代码考到mapper/pojo的src/main/java下  
+
+### 4.SSM的整合    
+
+1. Dao层：使用mybatis框架，创建SqlMapConfig.xml   
+2. Spring配置：创建applicationContext-dao.xml  
+   - 配置数据源(db.properties),数据库连接池  
+   - 让Spring管理SqlsessionFactory中，单例存在   
+   - 把mapper代理对象放spring容器中，扫描包加载mapper代理对象    
+3. Service配置
+   - 事务管理  
+   - 把service实现对象spring容器管理  
+4. 表现层   
+   - 三大组件：配置注解驱动  
+   - 配置试图解析器  
+   - 扫描controller  
+5. Web.xml  
+   - spring容器的配置  
+   - springMVC前端控制器的配置  
+   - post乱码过滤器  
+6. 框架的整合需要把配置文件放在web下，因为它是war类型，tomcat只支持从war包读取文件（mybatis才可以从jar包中读取配置文件）    
+   - 根据技术架构在src/main/resources中新建文件夹Folder：mybatis,resource,spring  
+   - ​
+7. ​
+8. ​
+9.   
+
+
+
+
 
 
 
