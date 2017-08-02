@@ -101,17 +101,28 @@ web（controller）使用的是war，设置依赖，因为结构不完整，所�
 
 指定事务管理器，数据源    
 
-指定方法开头规则，是否需要开启新的事务（REQUIRED/SUPPORTS）  
+指定方法开头规则，是否需要开启新的事务（REQUIRED/SUPPORTS）   
 
-配置切面，指定的拦截对象    
+配置切面，指定的拦截对象     
 
-9. 表现层：在spring中配置springmvc.xml  
+9. 表现层：在spring中配置springmvc.xml   
 
-扫描controller，配置视图解析器  
+扫描controller，配置视图解析器   
 
-10. web.xm配置spring容器，前端控制器，post乱码过滤器  
+做资源映射来处理静态资源被拦截的问题  
+
+10. web.xm配置spring容器，前端控制器，post乱码过滤器   
+11. 父容器不能访问子容器，反过来可以
+
+子：springmvc--controller
+
+父：spring--service，dao  
 
 
+
+   
+
+视频loading08
 
 
 
