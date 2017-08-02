@@ -92,10 +92,32 @@ web（controller）使用的是war，设置依赖，因为结构不完整，所�
    - post乱码过滤器  
 6. 框架的整合需要把配置文件放在web下，因为它是war类型，tomcat只支持从war包读取文件（mybatis才可以从jar包中读取配置文件）    
    - 根据技术架构在src/main/resources中新建文件夹Folder：mybatis,resource,spring  
-   - ​
-7. ​
-8. ​
-9.   
+   - 往之间各自添加配置文件   
+7. 在spring中添加applicationContext-service.xml文件，编写service包扫描    
+
+在service中添加com.taotao.service,
+
+8. 在spring中添加applicationContext-trans.xml文件  
+
+指定事务管理器，数据源    
+
+指定方法开头规则，是否需要开启新的事务（REQUIRED/SUPPORTS）  
+
+配置切面，指定的拦截对象    
+
+9. 表现层：在spring中配置springmvc.xml  
+
+扫描controller，配置视图解析器  
+
+10. web.xm配置spring容器，前端控制器，post乱码过滤器  
+
+
+
+
+
+  
+
+
 
 
 
