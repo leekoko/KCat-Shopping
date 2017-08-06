@@ -68,7 +68,7 @@ web（controller）使用的是war，设置依赖，因为结构不完整，所�
 
 #### 1.逆向工程    
 
-导进逆向工程，配置数据库信息，指定生成po类/接口/映射文件的位置，放在哪个包，指定哪个表（再次生成需要先删掉旧代码）  
+导进逆向工程，配置数据库信息，根据数据库指定生成po类/接口/映射文件的位置，放在哪个包，指定哪个表（再次生成需要先删掉旧代码）  
 
 将生成的mapper/pojo代码考到mapper/pojo的src/main/java下  
 
@@ -118,9 +118,104 @@ web（controller）使用的是war，设置依赖，因为结构不完整，所�
 
 父：spring--service，dao  
 
+### 5.整合测试  
+
+#### 1.在service中编写接口  
+
+```java
+public interface ItemService {
+	TbItem getItemById(long itemId); 	
+}
+```
+
+#### 2.编写接口实现  
+
+```java
+@Service
+public class ItemServiceImpl implements ItemService{
+```
+
+将接口的代理对象注入进来   
+
+```java
+	@Autowired
+	private TbItemMapper itemMapper;
+```
+
+实现接口的方法:
+
+```java
+	@Override
+	public TbItem getItemById(long itemId) {
+```
+
+spring的applicationContext-service.xml添加service扫描:
+
+``<context:component-scan base-package="com.taotao.service"></context:component-scan>``  
+
+#### 3.新建Controller方法  
+
+```java
+@Controller
+public class ItemController {
+	@Autowired
+	private ItemService itemService;
+	
+	@RequestMapping("/item/{itemId}")
+	@ResponseBody
+	public TbItem getItemById(@PathVariable Long itemId){     //从路径中取参数
+		TbItem tbItem=itemService.getItemById(itemId);
+		return tbItem;
+	}	
+	
+}
+```
+
+注解controller,将Service注入   
+
+做映射跳转@RequestMapping("/item/{itemId}"),获取itemId,注解返回json对象(@PathVariable Long itemId表示从路径中取参数,itemId应该与上面的值相同)   
+
+这里还需要在springmvc.xml中配置扫描controller``	<context:component-scan base-package="com.taotao.controller" />` ``  
+
+为了防止mybatis的mapper.xml文件不会被漏掉,需要在web的pom中添加:
+
+```xml
+	<!-- 如果不添加此节点mybatis的mapper.xml文件都会被漏掉。 -->
+	<build>
+		<resources>
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.properties</include>
+                    <include>**/*.xml</include>
+                </includes>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
+	</build>
+```
+
+运行http://localhost:8080/item/830972即可测试获取数据   
+
+#### 4.遇到的BUG
+
+这里要求运行在jdk环境,我原本用的是jre.但是由于eclipse是32位的,所以我还需要配合使用32位的jdk.(还需在window环境和eclipse中配置:java-Installed JREs)     
 
 
-   
+
+
+
+
+
+
+
+
+
+
+
+
+
+---
 
 
 
