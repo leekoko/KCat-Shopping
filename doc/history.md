@@ -47,6 +47,8 @@ web（controller）使用的是war，设置依赖，因为结构不完整，所�
 
 （注意：要把taotao-parent&common安装到本地仓库）  
 
+---
+
 ### 2.使用svn  
 
 1. 新建仓库，选择创建简单的仓库结构  
@@ -64,6 +66,8 @@ web（controller）使用的是war，设置依赖，因为结构不完整，所�
 5. 冲突：因为本地和服务器上传后会冲突，所以需要右键进行更新再提交  
 6. 可以从svn导入maven工程，在从存在的maven project导入manager项目，manager项目可以转化为maven项目  
 
+---
+
 ### 3.创建数据库      
 
 #### 1.逆向工程    
@@ -71,6 +75,8 @@ web（controller）使用的是war，设置依赖，因为结构不完整，所�
 导进逆向工程，配置数据库信息，根据数据库指定生成po类/接口/映射文件的位置，放在哪个包，指定哪个表（再次生成需要先删掉旧代码）  
 
 将生成的mapper/pojo代码考到mapper/pojo的src/main/java下  
+
+---
 
 ### 4.SSM的整合    
 
@@ -117,6 +123,8 @@ web（controller）使用的是war，设置依赖，因为结构不完整，所�
 子：springmvc--controller
 
 父：spring--service，dao  
+
+---
 
 ### 5.整合测试  
 
@@ -197,25 +205,147 @@ public class ItemController {
 
 运行http://localhost:8080/item/830972即可测试获取数据   
 
-#### 4.遇到的BUG
+#### 4.遇到的问题  
 
 这里要求运行在jdk环境,我原本用的是jre.但是由于eclipse是32位的,所以我还需要配合使用32位的jdk.(还需在window环境和eclipse中配置:java-Installed JREs)     
 
+#### 5.使用tomcat插件DeBug遇到的问题    
 
-
-
-
-
-
-
-
-
-
-
-
-
+没有源码,需要把默认的remove掉,添加java Project:选择四个模块重启即可  
 
 ---
+
+### 6.商品列表的查询  
+
+#### 1.做页面跳转  
+
+1. 配置首页跳转  
+
+   ```java
+   	@RequestMapping("/")
+   	public String showIndex() {
+   		return "index";
+   	}
+   ```
+
+   返回逻辑视图--配了视图解析器(在springmvc.xml中配置)  
+
+   视图解析器只要返回字符串,它就会自动拼成路径  
+
+2. 配置其他页面跳转  
+
+其他页面的前台跳转  
+
+``<li data-options="attributes:{'url':'item-add'}">新增商品</li>``传的刚好是页面的名称  
+
+```java
+	@RequestMapping("/{page}")
+	public String showpage(@PathVariable String page) {
+		return page;
+	}
+```
+
+通过controller获取传来的值,将其跳转到同名的路径上.  
+
+#### 2.做商品展示测试  
+
+1. easyUI通过 data-options 向后台请求数据,请求的时候还会默认带上page和rows两个参数.  
+
+2. 编写顺序:mapper--Dao--Service--Controller  
+
+3. 不想重写mapper,所以使用分页插件pageHeader  
+
+   分页插件的原理就是在执行sql语句之前,通过拦截器添加limit限制  
+
+4. 使用方式,引入jar包(增加依赖pom文件),在mybatis中配置插件(SqlMapConfig.xml中配置)
+
+   由于pagehelper对分页插件的代码不太支持,所以这里用的是修改后的插件       
+
+```xml
+	<!-- 配置分页插件 -->
+	<plugins>
+		<plugin interceptor="com.github.pagehelper.PageHelper">
+			<!-- 设置数据库类型 Oracle,Mysql,MariaDB,SQLite,Hsqldb,PostgreSQL六种数据库-->        
+        	<property name="dialect" value="mysql"/>
+		</plugin>
+	</plugins>
+```
+
+还需要制定方言  
+
+5. 因为是测试类,所以在web的test目录下写  
+
+使用junit测试
+
+```java
+	@Test
+	public void testPageHelper(){
+		//创建Spring容器
+		ApplicationContext applicationContext=new ClassPathXmlApplicationContext("classpath:spring/applicationContext-dao.xml");
+		//从Spring容器中获得Mapper代理对象   
+		TbItemMapper mapper=applicationContext.getBean(TbItemMapper.class);
+		//执行查询,并分页
+		TbItemExample example=new TbItemExample();
+		//分页查询
+		PageHelper.startPage(1, 10);  //分页专用方法
+		List<TbItem> list=mapper.selectByExample(example);
+		//取商品列表
+		for (TbItem tbItem:list) {
+			System.out.println(tbItem.getTitle());
+		}
+		//取分页信息
+		PageInfo<TbItem> pageInfo=new PageInfo<>(list);
+		long total=pageInfo.getTotal();
+		System.out.println("一共有商品信息"+total);
+	}
+```
+
+#### 3.页面展示应用  
+
+1. 创建pojo   
+
+在common工程中创建pojo,用来接收分页参数   
+
+2. 在Service中使用分页插件(基于接口的实现)  
+
+```java
+	/**
+	 * 商品列表的查询
+	 */
+	@Override
+	public EUDataGridResult getItemList(int page, int rows) {
+		//查询商品列表
+		TbItemExample example=new TbItemExample();
+		//分页处理
+		PageHelper.startPage(page, rows);
+		List<TbItem> list=itemMapper.selectByExample(example);
+		//创建一个返回值对象  
+		EUDataGridResult result=new EUDataGridResult();
+		result.setRows(list);
+		//取记录总条数
+		PageInfo<TbItem> pageInfo=new PageInfo<>(list);
+		result.setTotal(pageInfo.getTotal());
+		return result;
+	}
+```
+
+3. 在controller对url的映射,获取参数,返回数值   
+
+```java
+	@RequestMapping("/item/list")
+	@ResponseBody
+	public EUDataGridResult getItemList(Integer page,Integer rows){
+		return itemService.getItemList(page, rows);
+	}
+```
+
+传参直接就可以接收了  
+
+---
+
+
+
+
 
 
 
