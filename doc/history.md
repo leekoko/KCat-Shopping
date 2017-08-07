@@ -341,9 +341,21 @@ public class ItemController {
 
 传参直接就可以接收了  
 
----
+### 7.异步Tree  
+
+子节点的加载依赖于父节点的状态,通过请求id检索子节点  
+
+#### 1.Dao层  
+
+单表查询可以使用逆向工程生成的代码  
+
+#### 2.Service层  
+
+接收parentId参数,根据parentId获取子类目(可以使用pojo来描述返回,pojo包含id,text,state属性,pojo放在common中)     
 
 
+
+loading:03-6min
 
 
 
