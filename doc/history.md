@@ -353,9 +353,29 @@ public class ItemController {
 
 接收parentId参数,根据parentId获取子类目(可以使用pojo来描述返回,pojo包含id,text,state属性,pojo放在common中)     
 
+Service先做一个接口,然后去实现接口的方法:注意写注解,注入的注解是``@Autowired``  
 
+使用逆向工程将id传过去
 
-loading:03-6min
+```java
+		Criteria criteria=example.createCriteria();
+		criteria.andParentIdEqualTo(parentId);
+```
+
+执行dao层的方法,返回数值添加到树中:  
+
+``List<TbItemCat> list=itemCatMapper.selectByExample(example);``  
+
+```java
+		//根据条件查询
+		for (TbItemCat tbItemCat:list) {
+			EUTreeNode node=new EUTreeNode();
+			node.setId(tbItemCat.getId());
+			node.setText(tbItemCat.getName());
+			node.setState(tbItemCat.getIsParent()?"closed":"open");
+			resultList.add(node);
+		}
+```
 
 
 
