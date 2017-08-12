@@ -379,13 +379,91 @@ Service先做一个接口,然后去实现接口的方法:注意写注解,注入�
 
 ### 8.图片上传   
 
+编写ftp上传功能:这里也可以直接封装成一个类,需要的时候调用(因为没有架设图片服务器,所以该功能暂时不能使用)   
+
+#### 1.编写Service  
+
+1. 获取文件的旧名,再给文件命新名  
+
+重新命名可以用uid,也可以用时间命名(时间命名可以用包装好的工具_IDUtils_)  
+
+2. 将新名和旧的后缀结合,调用上传文件的方法  
+
+用@Value注解读取配置文件  
+
+```java
+	@Value("${FTP_ADDRESS}")
+	private String FTP_ADDRESS;
+	@Value("${FTP_PORT}")
+	private Integer FTP_PORT;
+...
+```
 
 
-编写ftp上传功能,
+
+```java
+	@Override
+	public Map uploadPicture(MultipartFile uploadFile){
+		Map resultMap=new HashMap<>();
+		try {
+			//生成新的文件名  
+			//获取原始文件名,为了拿后缀
+			String oldName=uploadFile.getOriginalFilename();
+			//省成新的文件名  
+			//UUID.randomUUID();     //使用uid来处理重名问题或者使用日期命名     
+			String newName=IDUtils.genImageName();
+			newName=newName+oldName.substring(oldName.lastIndexOf("."));
+			//执行图片上传
+			String imagePath=new DateTime().toString("/yyyy/MM/dd");
+			boolean result=FtpUtil.uploadFile(FTP_ADDRESS, FTP_PORT, FTP_USERNAME, FTP_PASSWORD, FTP_BASE_PATH, imagePath, newName, uploadFile.getInputStream());
+			if(!result){
+				resultMap.put("error", 1);
+				resultMap.put("message", "上传文件失败");
+				return resultMap;
+			}
+			resultMap.put("error", 0);
+			resultMap.put("url", IMAGE_BASE_URL+imagePath+"/"+newName);
+			return resultMap;
+		} catch (Exception e) {
+			resultMap.put("error", 1);
+			resultMap.put("message", "文件上传发生异常");
+			return resultMap;
+		}
+	}
+```
+
+上传文件的文件夹使用org.joda.time的包方法,生成文件路径:``new DateTime().toString("/yyyy/MM/dd")``  
+
+3. 配置properties文件的编写  
+
+因为上传路径的不固定,所以将上传文件路径编写进配置文件中,applicationContext会读配置文件   
+
+```properties
+#Ftp相关配置  
+#Ftp的ip地址  
+FTP_ADDRESS=192.168.25.133
+FTP_PORT=21
+FTP_USERNAME=ftpuser
+FTP_PASSWORD=ftpuser
+FTP_BASE_PATH=/home/ftpuser/www/images
+#图片服务器的相关配置
+#图片服务器的基础url
+IMAGE_BASE_URL=http://192.169.25.133/images
+```
 
 
 
-loading...07_10
+
+
+
+
+
+
+09
+
+
+
+
 
 
 

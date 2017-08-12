@@ -1,4 +1,4 @@
-package com.taotao.service;
+package com.taotao.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +11,7 @@ import com.taotao.mapper.TbItemCatMapper;
 import com.taotao.pojo.TbItemCat;
 import com.taotao.pojo.TbItemCatExample;
 import com.taotao.pojo.TbItemCatExample.Criteria;
+import com.taotao.service.ItemCatService;
 @Service
 public class ItemCatServiceImpl implements ItemCatService{
 
