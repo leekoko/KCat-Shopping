@@ -451,15 +451,159 @@ FTP_BASE_PATH=/home/ftpuser/www/images
 IMAGE_BASE_URL=http://192.169.25.133/images
 ```
 
+applicationContext-dao配置扫描配置文件   
+
+``<!-- 加载配置文件 --><context:property-placeholder location="classpath:resource/*.properties" />``
+
+#### 2.编写Ccontroller
+
+```java
+@Controller
+public class PictureController {
+	@Autowired
+	private PictureService pictureService;
+	
+	@RequestMapping("/pic/upload")
+	@ResponseBody
+	public String pictureUpload(MultipartFile uploadFile){
+		Map result=pictureService.uploadPicture(uploadFile);
+		//为了保证功能的兼容性,把Result转化为json格式的字符串
+		String json=JsonUtils.objectToJson(result);
+		
+		return json;
+	}
+	
+}
+```
+
+还需要在spring.xml配置文件上传解析器(多部件解析器)     
+
+```xml
+	<!-- 定义文件上传解析器 -->
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<!-- 设定默认编码 -->
+		<property name="defaultEncoding" value="UTF-8"></property>
+		<!-- 设定文件上传的最大值5MB，5*1024*1024 -->
+		<property name="maxUploadSize" value="5242880"></property>
+	</bean>
+```
+
+使用JsonUtils将字符串转化为json  
+
+### 9.富文本编辑器的使用  
+
+1. 导入kindeditor的js文件,jsp引入标签:
+
+```html
+<script type="text/javascript" charset="utf-8" src="/js/kindeditor-4.1.10/kindeditor-all-min.js"></script>
+<script type="text/javascript" charset="utf-8" src="/js/kindeditor-4.1.10/lang/zh_CN.js"></script> 
+```
+
+2. 在jsp中添加textarea作为编辑器容器  
+
+```html
+<tr>
+  <td>商品描述:</td>
+  <td>
+    <textarea style="width:800px;height:300px;visibility:hidden;" name="desc"></textarea>
+  </td>
+</tr>
+```
+
+3. 初始化富文本编辑器  
+
+```javascript
+	//页面初始化完毕后执行此方法
+	$(function(){
+		//创建富文本编辑器
+		itemAddEditor = TAOTAO.createEditor("#itemAddForm [name=desc]");
+		//初始化类目选择和图片上传器
+		TAOTAO.init({fun:function(node){
+			//根据商品的分类id取商品 的规格模板，生成规格信息。第四天内容。
+			//TAOTAO.changeItemParam(node, "itemAddForm");
+		}});
+	});
+```
+
+上面调用到了另一个js文件common.js里面的初始化方法  
+
+提交前将文本编辑器同步到空间:``itemAddEditor.sync();``  
+
+### 10.提交表单  
+
+提交表单html编写
+
+```html
+	//提交表单
+	function submitForm(){
+		//有效性验证
+		if(!$('#itemAddForm').form('validate')){
+			$.messager.alert('提示','表单还未填写完成!');
+			return ;
+		}
+		//取商品价格，单位为“分”
+		$("#itemAddForm [name=price]").val(eval($("#itemAddForm [name=priceView]").val()) * 100);
+		//同步文本框中的商品描述
+		itemAddEditor.sync();
+		//取商品的规格
+
+		//ajax的post方式提交表单
+		//$("#itemAddForm").serialize()将表单序列号为key-value形式的字符串
+		$.post("/item/save",$("#itemAddForm").serialize(), function(data){
+			if(data.status == 200){
+				$.messager.alert('提示','新增商品成功!');
+			}
+		});
+	}
+```
+
+把表单中的内容序列化为key-value形式的字符串  
+
+返回内容可以自定义,这里可以使用TaotaoResult工具类  
+
+#### 1.Dao层  
+
+单表操作,直接使用逆向工程生成的代码   
+
+#### 2.Service层   
+
+接收pojo,对不完整的内容补全.Service用来做一些接近数据库底层的工作  
+
+```java
+	@Override
+	public TaotaoResult createItem(TbItem item) {
+		//item补全
+		
+		//没有id,生成商品ID,可以使用idUtils
+		Long itemId=IDUtils.genItemId();
+		item.setId(itemId);
+		//设置商品状态    1.-正常    2.-下架    3.-删除   
+		item.setStatus((byte)1);
+		item.setCreated(new Date());
+		item.setUpdated(new Date());
+		//插入到数据库 
+		itemMapper.insert(item);
+		
+		return TaotaoResult.ok();   //返回自定义返回信息  
+	}
+```
+
+商品id使用id生成类生成:``Long itemId=IDUtils.genItemId();``   
+
+使用注入的itemMapper,调用其插入方法    
+
+返回定义的返回信息,使用返回信息生成类TaotaoResult   
+
+#### 3.Controller  
+
+调用Service,返回json数据   
 
 
 
 
 
 
-
-
-09
 
 
 
