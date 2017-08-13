@@ -584,7 +584,12 @@ public class PictureController {
 		item.setUpdated(new Date());
 		//插入到数据库 
 		itemMapper.insert(item);
-		
+		//添加商品描述信息
+		TaotaoResult result=insertItemDesc(itemId, desc);
+		if(result.getStatus()!=200){   //出错,抛出异常
+			throw new Exception();
+		}
+      
 		return TaotaoResult.ok();   //返回自定义返回信息  
 	}
 ```
@@ -595,11 +600,37 @@ public class PictureController {
 
 返回定义的返回信息,使用返回信息生成类TaotaoResult   
 
+商品描述类:
+
+```java
+/**
+ * 添加商品描述
+ * @param desc
+ */
+private TaotaoResult insertItemDesc(Long itemId,String desc){
+	TbItemDesc itemDesc=new TbItemDesc();
+	itemDesc.setItemId(itemId);
+	itemDesc.setItemDesc(desc);
+	itemDesc.setCreated(new Date());
+	itemDesc.setUpdated(new Date());
+	itemDescMapper.insert(itemDesc);
+	return TaotaoResult.ok();
+}
+```
 #### 3.Controller  
 
 调用Service,返回json数据   
 
+```java
+	@RequestMapping(value="/item/save",method=RequestMethod.POST)
+	@ResponseBody
+	private TaotaoResult createItem(TbItem item,String desc) throws Exception{
+		TaotaoResult result=itemService.createItem(item,desc);
+		return result;
+	}
+```
 
+desc是描述框的内容   
 
 
 
