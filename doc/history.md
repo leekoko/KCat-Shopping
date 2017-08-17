@@ -7,9 +7,7 @@
 
 不用模板，组织id为com.taotao  
 
-Artifact id:    taotao-parent  
-
-父工程为pom工程，不用继承于谁    
+Artifact id:    taotao-parent     父工程为pom工程，不用继承于谁    
 
 3. 配置pom文件的版本信息 
 
