@@ -5,7 +5,7 @@
 1. 替换掉本地仓库.m2  
 2. 创建parent的maven父工程   
 
-不用模板，组织id为com.taotao  
+不用模板，  组织id为com.taotao  
 
 Artifact id:    taotao-parent     父工程为pom工程，不用继承于谁    
 
