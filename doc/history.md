@@ -594,11 +594,9 @@ public class PictureController {
 	}
 ```
 
-商品id使用id生成类生成:``Long itemId=IDUtils.genItemId();``   
-
-使用注入的itemMapper,调用其插入方法    
-
-返回定义的返回信息,使用返回信息生成类TaotaoResult   
+1. 商品id使用id生成类生成:``Long itemId=IDUtils.genItemId();``   
+2. 使用注入的itemMapper,调用其插入方法    
+3. 返回定义的返回信息,使用返回信息生成类TaotaoResult   
 
 商品描述类:
 
@@ -652,9 +650,9 @@ desc是描述框的内容
 
 
 
+7_4min
 
 
-7
 
 
 
