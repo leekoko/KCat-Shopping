@@ -27,13 +27,7 @@ Artifact id:    taotao-parent     父工程为pom工程，不用继承于谁
 
 创建模块的方式：在聚合工程上新建maven module   
 
-pojo不依赖任何jar包  
-
-mapper配置需要的依赖  
-
-service设置依赖
-
-web（controller）使用的是war，设置依赖，因为结构不完整，所以会报错  
+pojo不依赖任何jar包    mapper配置需要的依赖     service设置依赖    web（controller）使用的是war，设置依赖，因为结构不完整，所以会报错  
 
 （需要在src/main/webapp下创建WEB-INF/web.xml）  
 
