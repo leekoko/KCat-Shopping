@@ -180,7 +180,9 @@ public class ItemController {
 
 做映射跳转@RequestMapping("/item/{itemId}"),获取itemId,注解返回json对象(@PathVariable Long itemId表示从路径中取参数,itemId应该与上面的值相同)   
 
-这里还需要在springmvc.xml中配置扫描controller``	<context:component-scan base-package="com.taotao.controller" />` ``  
+这里还需要在springmvc.xml中配置扫描controller
+
+``	<context:component-scan base-package="com.taotao.controller" />` ``  
 
 为了防止mybatis的mapper.xml文件不会被漏掉,需要在web的pom中添加:
 
@@ -429,7 +431,9 @@ Service先做一个接口,然后去实现接口的方法:注意写注解,注入�
 	}
 ```
 
-上传文件的文件夹使用org.joda.time的包方法,生成文件路径:``new DateTime().toString("/yyyy/MM/dd")``  
+上传文件的文件夹使用org.joda.time的包方法,生成文件路径:
+
+``new DateTime().toString("/yyyy/MM/dd")``  
 
 3. 配置properties文件的编写  
 
