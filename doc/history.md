@@ -5,11 +5,9 @@
 1. 替换掉本地仓库.m2  
 2. 创建parent的maven父工程   
 
-不用模板，组织id为com.taotao  
+不用模板，  组织id为com.taotao  
 
-Artifact id:    taotao-parent  
-
-父工程为pom工程，不用继承于谁    
+Artifact id:    taotao-parent     父工程为pom工程，不用继承于谁    
 
 3. 配置pom文件的版本信息 
 
@@ -29,13 +27,12 @@ Artifact id:    taotao-parent
 
 创建模块的方式：在聚合工程上新建maven module   
 
-pojo不依赖任何jar包  
+- pojo不依赖任何jar包    
 
-mapper配置需要的依赖  
 
-service设置依赖
-
-web（controller）使用的是war，设置依赖，因为结构不完整，所以会报错  
+- mapper配置需要的依赖     
+- service设置依赖    
+- web（controller）使用的是war，设置依赖，因为结构不完整，所以会报错  
 
 （需要在src/main/webapp下创建WEB-INF/web.xml）  
 
@@ -183,7 +180,9 @@ public class ItemController {
 
 做映射跳转@RequestMapping("/item/{itemId}"),获取itemId,注解返回json对象(@PathVariable Long itemId表示从路径中取参数,itemId应该与上面的值相同)   
 
-这里还需要在springmvc.xml中配置扫描controller``	<context:component-scan base-package="com.taotao.controller" />` ``  
+这里还需要在springmvc.xml中配置扫描controller
+
+``	<context:component-scan base-package="com.taotao.controller" />` ``  
 
 为了防止mybatis的mapper.xml文件不会被漏掉,需要在web的pom中添加:
 
@@ -432,7 +431,9 @@ Service先做一个接口,然后去实现接口的方法:注意写注解,注入�
 	}
 ```
 
-上传文件的文件夹使用org.joda.time的包方法,生成文件路径:``new DateTime().toString("/yyyy/MM/dd")``  
+上传文件的文件夹使用org.joda.time的包方法,生成文件路径:
+
+``new DateTime().toString("/yyyy/MM/dd")``  
 
 3. 配置properties文件的编写  
 
@@ -594,11 +595,9 @@ public class PictureController {
 	}
 ```
 
-商品id使用id生成类生成:``Long itemId=IDUtils.genItemId();``   
-
-使用注入的itemMapper,调用其插入方法    
-
-返回定义的返回信息,使用返回信息生成类TaotaoResult   
+1. 商品id使用id生成类生成:``Long itemId=IDUtils.genItemId();``   
+2. 使用注入的itemMapper,调用其插入方法    
+3. 返回定义的返回信息,使用返回信息生成类TaotaoResult   
 
 商品描述类:
 
@@ -652,9 +651,9 @@ desc是描述框的内容
 
 
 
+7_4min
 
 
-7
 
 
 
