@@ -216,7 +216,20 @@ _像个规划的，只管是哪个版本的，还没去仓库拿插件_
 
 组件名称（Group Id，Artifact Id，同2-2），${XX.version}引用上方的版本号    
 
-依赖父工程的pom.xml文件不需要再定义版本：``<version>${solrj.version}</version>``   
+依赖父工程的pom.xml文件不需要再定义版本：``<version>${solrj.version}</version>``    
+
+jar包依赖的方式：
+
+```xml
+<!-- 依赖管理 -->
+  <dependencies>
+  	<dependency>
+  		<groupId>com.taotao</groupId>
+  		<artifactId>taotao-common</artifactId>
+  		<version>0.0.1-SNAPSHOT</version>
+  	</dependency>
+  </dependencies>
+```
 
 ### 2.添加实际依赖   
 
@@ -271,7 +284,7 @@ _像个规划的，只管是哪个版本的，还没去仓库拿插件_
 	<version>0.0.1-SNAPSHOT</version>
 ```
 
-依赖的父工程
+依赖的父工程（工程依赖）
 
 ```xml
 	<parent>
@@ -281,23 +294,56 @@ _像个规划的，只管是哪个版本的，还没去仓库拿插件_
 	</parent>
 ```
 
-
-
 ## 4.maven项目的分工   
 
-### 1.taotao-parent  
+### 1.聚合工程：taotao-parent  
 
 所有项目的父工程，pom.xml定义了要用的所有插件的版本
 
-### 2.taotao-common   
+### 2.jar包：taotao-common   
 
 通用的工具存放的地方，通过继承taotao.parent获取其管理的版本，并对插件进行实际依赖   
 
-为了让其他包依赖，打成jar包。
+为了让其他包依赖共享，打成jar包。
 
-Artifact Id为taotao-commom  
+Artifact Id为taotao-commom    
 
 ![](../img/p02.png)    
 
-  
+ ### 3.聚合工程：taotao-manage  
 
+为了代码共享，把mapper，pojo，service打成jar包，打包进war里面，合成一个pom聚合工程   
+
+该聚合工程需要依赖taotao-parent（工程依赖）和taotao-common(jar包依赖)  
+
+_这是由几个jar包组成的聚合工程，再由聚合工程+jar包组成另一个大聚合工程_    
+
+#### 1.pojo的jar包   
+
+（创建模块的方式：pom工程右键--新建maven module）  
+
+pojo为简单java对象，不需要依赖其他工程   
+
+#### 2.mapper的jar包   
+
+mapper的xml文件，接口需要使用pojo，所以依赖pojo    
+
+#### 3.service的jar包   
+
+service要把mapper注入进来，所以需要依赖mapper   
+
+#### 4.controller的war包   
+
+一个聚合工程必须有一个war包，需要依赖service，这样service及其依赖的都会传递过来   
+
+
+
+
+
+
+
+
+
+
+
+根据数据库的表生成接口，逆向工程文件，pojo   
