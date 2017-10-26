@@ -1,4 +1,4 @@
-# maven工程搭建(feiman：why，no step)   
+# maven工程搭建   
 
 ## 1.maven的仓库   
 
@@ -31,7 +31,7 @@
 
 pom.xml文件用来配置版本信息，告诉程序需要去下载哪些jar包  
 
-### 1.集中定义版本号   
+### 1.集中定义jar包版本号   
 
 在parent中集中定义管理版本号，但不实际依赖   
 
@@ -214,9 +214,10 @@ _像个规划的，只管是哪个版本的，还没去仓库拿插件_
 	</dependencyManagement>
 ```
 
-组件名称（Group Id，Artifact Id，同2-2），${XX.version}引用上方的版本号    
+- 组件名称（Group Id，Artifact Id，同2-2），${XX.version}引用上方的版本号    
 
-依赖父工程的pom.xml文件不需要再定义版本：``<version>${solrj.version}</version>``    
+
+- 子工程依赖父工程的pom.xml文件不需要再定义版本：``<version>${solrj.version}</version>``    
 
 jar包依赖的方式：
 
@@ -231,7 +232,7 @@ jar包依赖的方式：
   </dependencies>
 ```
 
-### 2.添加实际依赖   
+### 2.添加插件依赖   
 
 ```xml
 	<build>
@@ -274,7 +275,29 @@ jar包依赖的方式：
 - 编译插件可以解决部署项目的时候默认1.5jdk问题   
 - tomcat插件使得调试更为方便       
 
-### 3.自动生成的信息  
+_插件是一个工具，而jar包是一块打包的源码，其引入方式不同_     
+
+### 3.使用插件依赖   
+
+```xml
+  <!-- tomcat插件 -->
+  <build>
+	  <plugins>
+	  	<plugin>
+			<groupId>org.apache.tomcat.maven</groupId>
+			<artifactId>tomcat7-maven-plugin</artifactId>
+			<configuration>
+				<port>8080</port>
+				<path>/</path>
+			</configuration>
+	  	</plugin>
+	  </plugins> 
+  </build>
+```
+
+可以配置端口，设置运行为根目录  
+
+### 4.自动生成的信息  
 
 本身工程
 
@@ -294,11 +317,24 @@ jar包依赖的方式：
 	</parent>
 ```
 
+子模块信息
+
+```xml
+  <modules>
+  	<module>taotao-manager-pojo</module>
+  	<module>taotao-manager-mapper</module>
+  	<module>taotao-manager-service</module>
+  	<module>taotao-manager-controller</module>
+  </modules>
+```
+
+
+
 ## 4.maven项目的分工   
 
 ### 1.聚合工程：taotao-parent  
 
-所有项目的父工程，pom.xml定义了要用的所有插件的版本
+所有项目的父工程，pom.xml定义了整个项目需要的所有jar包的版本
 
 ### 2.jar包：taotao-common   
 
@@ -310,11 +346,11 @@ Artifact Id为taotao-commom
 
 ![](../img/p02.png)    
 
- ### 3.聚合工程：taotao-manage  
+ ### 3.聚合工程：taotao-manager  
 
-为了代码共享，把mapper，pojo，service打成jar包，打包进war里面，合成一个pom聚合工程   
-
-该聚合工程需要依赖taotao-parent（工程依赖）和taotao-common(jar包依赖)  
+1. 为了代码共享，把mapper，pojo，service打成jar包，打包进war里面，合成一个pom聚合工程   
+2. 该聚合工程需要依赖taotao-parent（工程依赖）和taotao-common(jar包依赖)    
+3. 因为manager要运行tomcat插件，所以需要配置插件（端口：8080，根目录运行）     
 
 _这是由几个jar包组成的聚合工程，再由聚合工程+jar包组成另一个大聚合工程_    
 
@@ -326,24 +362,69 @@ pojo为简单java对象，不需要依赖其他工程
 
 #### 2.mapper的jar包   
 
-mapper的xml文件，接口需要使用pojo，所以依赖pojo    
+mapper的xml文件，接口需要使用pojo，所以依赖pojo的jar包。除此之外，    
+
+因为mybatis之类的jar包只在mapper这里用到，所以之前依赖的jar包没有（像mybatis，分页插件，数据库驱动，连接池等），去parent的pom文件中寻找依赖添加到pom文件的依赖。  
+
+_从上一级的依赖找jar包，缺的再去parent中找_  
 
 #### 3.service的jar包   
 
-service要把mapper注入进来，所以需要依赖mapper   
+service要把mapper注入进来，所以需要依赖mapper    
+
+这里需要附加的jar包是spring相关的  
 
 #### 4.controller的war包   
 
 一个聚合工程必须有一个war包，需要依赖service，这样service及其依赖的都会传递过来   
 
+附加的包有jsp相关的jar包  
+
+因为缺少目录结构，创建的时候会报错，所以在src-main-webapp下新建WEB-INF - web.xml  
+
+原始web.xml的内容：
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	id="taotao" version="2.5">
+	<display-name>taotao-manager</display-name>
+	<welcome-file-list>
+		<welcome-file>index.html</welcome-file>
+		<welcome-file>index.htm</welcome-file>
+		<welcome-file>index.jsp</welcome-file>
+		<welcome-file>default.html</welcome-file>
+		<welcome-file>default.htm</welcome-file>
+		<welcome-file>default.jsp</welcome-file>
+	</welcome-file-list>
+</web-app>
+```
+
+## 5.插件tomcat运行maven工程
+
+### 1.前端页面位置  
+
+根目录为webapp，在下面新建index.jsp页面就可以直接访问   
+
+### 2.运行步骤  
+
+1. 安装依赖的项目到本地仓库：
+
+   右键被依赖项目 - run as - maven install  
+
+_因为依赖的是我们自己创建的，本地仓库找不到，所以需要进行生成_    
+
+2. 右键聚合工程 - run as - maven build  
 
 
+3. Goals输入maven命令：
 
+clean tomcat7:run
 
+清空重新编译  运行tomcat7   （在parent中就已经对tomcat版本进行控制，只能使用7的版本）  
 
+### 3.异常  
 
-
-
-
-
-根据数据库的表生成接口，逆向工程文件，pojo   
+当启动多个tomcat就会报：``Failed to execute goal org.apache.maven.plugins:maven-clean-plugin:2.5``异常，这时候只要关闭所有的tomcat就可以了  
