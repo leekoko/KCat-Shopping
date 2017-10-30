@@ -290,7 +290,25 @@ _我叫视图解析器，是一位指路人。一个数据部落和我签下契�
 </web-app>
 ```
 
+web.xml文件是用来初始化配置信息：比如Welcome页面、servlet、servlet-mapping、filter、listener、启动加载级别等。  
 
+1. Listener  
+
+   Listener可以监听客户端的请求、服务端的操作等。通过监听器，可以自动激发一些操作，比如监听在线的用户的数量。  通俗的语言说就是在application，session，request三个对象创建消亡或者往其中添加修改删除属性时自动执行代码的功能组件。
+
+2. filter   
+
+   用filter设置请求的编码  
+
+3.   
+
+   ​
+
+```xml
+<!-- 资源映射 -->
+	<mvc:resources location="/WEB-INF/css/" mapping="/css/**"/>
+	<mvc:resources location="/WEB-INF/js/" mapping="/js/**"/>
+```
 
 
 
