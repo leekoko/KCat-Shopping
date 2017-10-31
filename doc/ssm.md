@@ -268,9 +268,10 @@ _我叫视图解析器，是一位指路人。一个数据部落和我签下契�
 			<param-value>utf-8</param-value>
 		</init-param>
 	</filter>
+    <!-- 拦截所有请求进行过滤 -->
 	<filter-mapping>
 		<filter-name>CharacterEncodingFilter</filter-name>
-		<url-pattern>/*</url-pattern>
+		<url-pattern>/*</url-pattern>  
 	</filter-mapping>
 	<!-- springmvc的前端控制器 -->
 	<servlet>
@@ -296,13 +297,7 @@ web.xml文件是用来初始化配置信息：比如Welcome页面、servlet、se
 
    Listener可以监听客户端的请求、服务端的操作等。通过监听器，可以自动激发一些操作，比如监听在线的用户的数量。  通俗的语言说就是在application，session，request三个对象创建消亡或者往其中添加修改删除属性时自动执行代码的功能组件。
 
-2. filter   
-
-   用filter设置请求的编码  
-
-3.   
-
-   ​
+2. servlet会拦截所有的文件，由于静态资源被servlet拦截，所以需要在springmvc.xml中添加资料映射，才可以被正常访问。      
 
 ```xml
 <!-- 资源映射 -->
@@ -310,7 +305,11 @@ web.xml文件是用来初始化配置信息：比如Welcome页面、servlet、se
 	<mvc:resources location="/WEB-INF/js/" mapping="/js/**"/>
 ```
 
+_web.xml像一个管理员，管控着框架的启动运行。_  
 
+## 3.添加静态文件   
+
+将静态文件复制到WEB-INF文件夹下面。
 
 
 
