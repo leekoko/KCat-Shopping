@@ -311,11 +311,37 @@ _web.xml像一个管理员，管控着框架的启动运行。_
 
 将静态文件复制到WEB-INF文件夹下面。
 
+![](../img/p04.png)    
 
+## 4.测试部署  
 
+### 1.service层的抽象接口
 
+在manager-service包下新建抽象接口，为的是便于扩展    
 
-   
+_架构师写一行字：“获取全部信息方法”（编写接口），开发人员就根据这行字把功能实现出来_       
+
+### 2.service层的实现接口   
+
+在manager-service包下新建impl文件夹，把接口的实现方法写在里面      
+
+_目的是为了整齐规范，一般我们只需要看到外面的接口内容，而需要知道详情的时候才点进impl文件夹去看_    
+
+实现该接口还需要添加``@Service``，告诉容器，这是一个Service。如果用到Mapper接口的方法，则需要用``@Autowired``把Mapper注入进来。
+
+_实现service抽象方法，调用底层的方法需要注入_   
+
+### 3.controller层调用
+
+在manager-controller包下新建controller类
+
+首先要添加``@Controller``,告诉系统这是Controller。而要使用Service的方法就要把Service注入进来。
+
+_Controller和Service基本归纳为：介绍自己，注入底层，调用上一层方法_     
+
+当mapper使用``@RequestMapping("/item/{itemId}")``注解的时候，说明前端把itemId作为参数传了过来，在参数列表中添加``@PathVariable Long itemId``进行接收   
+
+而当要返回内容的时候，需要添加``@ResponseBody``告诉系统进行返回了信息。   
 
 
 
