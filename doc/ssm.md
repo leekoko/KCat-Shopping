@@ -319,6 +319,8 @@ _web.xml像一个管理员，管控着框架的启动运行。_
 
 在manager-service包下新建抽象接口，为的是便于扩展    
 
+![](../img/p05.png)  
+
 _架构师写一行字：“获取全部信息方法”（编写接口），开发人员就根据这行字把功能实现出来_       
 
 ### 2.service层的实现接口   
@@ -327,7 +329,30 @@ _架构师写一行字：“获取全部信息方法”（编写接口），开�
 
 _目的是为了整齐规范，一般我们只需要看到外面的接口内容，而需要知道详情的时候才点进impl文件夹去看_    
 
-实现该接口还需要添加``@Service``，告诉容器，这是一个Service。如果用到Mapper接口的方法，则需要用``@Autowired``把Mapper注入进来。
+实现该接口还需要添加``@Service``，告诉容器，这是一个Service。如果用到Mapper接口的方法，则需要用``@Autowired``把Mapper注入进来。  
+
+eg:
+
+```java
+@Service
+public class ItemServiceImpl implements ItemService{	
+	@Autowired
+	private TbItemMapper itemMapper;
+	@Override
+	public TbItem getItemById(long itemId){
+		TbItemExample example = new TbItemExample();
+		//添加查询条件
+		Criteria criteria = example.createCriteria();
+		criteria.andIdEqualTo(itemId);	
+		List<TbItem> list = itemMapper.selectByExample(example);
+		if(list != null && list.size() > 0){
+			TbItem item = list.get(0);
+			return item;
+		}
+		return null;
+	}
+}
+```
 
 _实现service抽象方法，调用底层的方法需要注入_   
 
@@ -335,7 +360,22 @@ _实现service抽象方法，调用底层的方法需要注入_
 
 在manager-controller包下新建controller类
 
-首先要添加``@Controller``,告诉系统这是Controller。而要使用Service的方法就要把Service注入进来。
+首先要添加``@Controller``,告诉系统这是Controller。而要使用Service的方法就要把Service注入进来。···
+
+```java
+@Controller
+public class ItemController {
+	@Autowired
+	private ItemService itemService;
+	
+	@RequestMapping("/item/{itemId}")
+	@ResponseBody
+	public TbItem getItemById(@PathVariable Long itemId){
+		TbItem tbItem = itemService.getItemById(itemId);
+		return tbItem;
+	}
+}
+```
 
 _Controller和Service基本归纳为：介绍自己，注入底层，调用上一层方法_     
 
@@ -343,11 +383,4 @@ _Controller和Service基本归纳为：介绍自己，注入底层，调用上�
 
 而当要返回内容的时候，需要添加``@ResponseBody``告诉系统进行返回了信息。   
 
-
-
-
-
-
-
-
-
+![](../img/p06.png)  
