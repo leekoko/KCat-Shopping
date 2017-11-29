@@ -5,11 +5,13 @@
 
 ### 2.[ssm搭建](doc/ssm.md )  
 
-### 3.[jsp页面跳转](doc/pageController.md)   
+### 3.[jsp页面跳转](doc/pageController.md)     
+
+### 4.[pagehelper插件](doc/pagehelper.md)    
 
 
 
-2t  17v   7min
+
 
 
 
