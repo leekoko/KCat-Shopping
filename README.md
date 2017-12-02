@@ -7,8 +7,9 @@
 
 ### 3.[jsp页面跳转](doc/pageController.md)     
 
-### 4.[pagehelper插件](doc/pagehelper.md)    
+### 4.[pagehelper插件](doc/pagehelper.md)       
 
+### 5.[easyUI tree插件](doc/easyUI_tree.md)  
 
 
 
