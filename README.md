@@ -9,10 +9,12 @@
 
 ### 4.[pagehelper插件](doc/pagehelper.md)       
 
-### 5.[easyUI tree插件](doc/easyUI_tree.md)  
+### 5.[easyUI tree插件](doc/easyUI_tree.md)     
+
+### 6.[图片上传：图片服务器搭建](doc/imgUpload_nginx.md)    
 
 
 
 
 
-
+第三天     视频5
