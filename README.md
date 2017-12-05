@@ -11,7 +11,7 @@
 
 ### 5.[easyUI tree插件](doc/easyUI_tree.md)     
 
-### 6.[图片上传：图片服务器搭建](doc/imgUpload_nginx.md)    
+### 6.[Java代码实现ftp上传](doc/Java_ftp.md)      
 
 
 
