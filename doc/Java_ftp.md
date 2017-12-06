@@ -40,12 +40,50 @@ _我有很多不同的螺丝刀，本来我的螺丝刀放在工具箱里面，�
 
    ​
 
+
+
+
+
 ​    common-net          io        upload    的关系
 
 
 
 ## 2.测试Java控制ftp上传代码   
 
+```java
+	public static void main(String[] args) throws Exception {
+		FTPClient ftpClient = new FTPClient();
+		ftpClient.connect("192.168.175.128",21);     //连接ftp,端口号默认21
+		ftpClient.login("ftpuser", "ftpuser");   //登陆账号密码
+         //读取到io流
+		FileInputStream inputStream = new FileInputStream(new File("D:\\20171108b.jpg"));
+		ftpClient.changeWorkingDirectory("/home/ftpuser/www/images"); //设置上传路径
+		ftpClient.setFileType(FTP.BINARY_FILE_TYPE);    //修改上传文件的格式
+		ftpClient.storeFile("testftpImg.jpg", inputStream);  //服务器端文件名，io流
+		inputStream.close();
+		ftpClient.logout();
+	}
+```
+
+使用FTPClient对象，就可以将它作为ftp工具使用了。
+
+## 3.包装ftp上传代码为工具类     
+
+由于  ftp上传  可能在多个项目中使用到，所以将代码改造成通用的工具类，放在common工程中。
+
+因为这是一段可以直接使用的代码，原理与上方相似，这里直接提供源码：【[ftp上传工具类](../Tools/FtpUtil.java)】。
+
+### 1.测试ftp工具类   
+
+```java
+	@Test
+	public void testFtpUtil() throws Exception{
+		FileInputStream inputStream = new FileInputStream(new File("D:\\A.jpg"));
+		FtpUtil.uploadFile("192.168.175.128", 21, "ftpuser", "ftpuser", "/home/ftpuser/www/images", "2017/12/06", "hai.jpg", inputStream);	
+	}
+```
+
+_工具类已经把相应的固定代码封装起来，只要传入会变的参数就可以了。_    
 
 
 
@@ -54,19 +92,6 @@ _我有很多不同的螺丝刀，本来我的螺丝刀放在工具箱里面，�
 
 
 
-
-
-不用客户端，用java代码访问     
-
-使用Apache工具包common-net
-
-引包   
-
-编写测试类   
-
-封装成工具类，直接被别的项目使用。直接用      
-
-工具类的使用，做Test     
 
 # 前端KindEdit插件使用
 

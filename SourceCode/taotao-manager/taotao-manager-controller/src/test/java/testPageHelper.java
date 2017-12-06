@@ -1,7 +1,11 @@
 import static org.junit.Assert.*;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.List;
 
+import org.apache.commons.net.ftp.FTP;
+import org.apache.commons.net.ftp.FTPClient;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -32,4 +36,5 @@ public class testPageHelper {
 		long total = pageInfo.getTotal();
 		System.out.println("总共有商品信息条数："+total);
 	}
+
 }
