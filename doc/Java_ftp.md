@@ -22,6 +22,8 @@ _我有很多不同的螺丝刀，本来我的螺丝刀放在工具箱里面，�
 
    本文我的虚拟机ip为192.168.25.133 ，账号：ftpuser  ，密码：ftpuser    
 
+   _有了放图片的架子_
+
 2. pom文件引入commons-net的jar包    
 
    ```xml
@@ -38,13 +40,94 @@ _我有很多不同的螺丝刀，本来我的螺丝刀放在工具箱里面，�
 
    Commons net包中的ftp工具类能够帮助我们轻松实现Ftp方式的文件上传/下载。（相当于ftp上传工具）   
 
-   ​
+   _购进运输图片的工具_
+
+3. 搭建好EditKinder前端    
+
+   - 设置编辑器参数：
+
+   ```javascript
+   	// 编辑器参数
+   	kingEditorParams : {
+   		//指定上传文件参数名称
+   		filePostName  : "uploadFile",
+   		//指定上传文件请求的url。
+   		uploadJson : '/pic/upload',
+   		//上传类型，分别为image、flash、media、file
+   		dir : "image"
+   	},
+   ```
+
+   指定url和类型
+
+   - 初始化图片上传组件    
+
+   ```javascript
+       init : function(data){
+       	// 初始化图片上传组件
+       	this.initPicUpload(data);
+       },
+   ```
+
+   ```javascript
+       // 初始化图片上传组件
+       initPicUpload : function(data){
+       	$(".picFileUpload").each(function(i,e){
+       		var _ele = $(e);
+       		_ele.siblings("div.pics").remove();
+       		_ele.after('\
+       			<div class="pics">\
+           			<ul></ul>\
+           		</div>');
+       		// 回显图片
+           	if(data && data.pics){
+           		var imgs = data.pics.split(",");
+           		for(var i in imgs){
+           			if($.trim(imgs[i]).length > 0){
+           				_ele.siblings(".pics").find("ul").append("<li><a href='"+imgs[i]+"' target='_blank'><img src='"+imgs[i]+"' width='80' height='50' /></a></li>");
+           			}
+           		}
+           	}
+           	//给“上传图片按钮”绑定click事件
+           	$(e).click(function(){
+           		var form = $(this).parentsUntil("form").parent("form");
+           		//打开图片上传窗口
+           		KindEditor.editor(TT.kingEditorParams).loadPlugin('multiimage',function(){
+           			var editor = this;
+           			editor.plugin.multiImageDialog({
+   						clickFn : function(urlList) {
+   							var imgArray = [];
+   							KindEditor.each(urlList, function(i, data) {
+   								imgArray.push(data.url);
+   								form.find(".pics ul").append("<li><a href='"+data.url+"' target='_blank'><img src='"+data.url+"' width='80' height='50' /></a></li>");
+   							});
+   							form.find("[name=image]").val(imgArray.join(","));
+   							editor.hideDialog();
+   						}
+   					});
+           		});
+           	});
+       	});
+       },
+   ```
+
+   点击按钮之后打开一个插件窗口，传入初始化参数  
+
+   _配置图片上传的插件：传什么类型，传到哪个Controller_      
+
+   - html的使用
+
+     ```html
+     	            <td>商品图片:</td>
+     	            <td>
+     	            	 <a href="javascript:void(0)" class="easyui-linkbutton picFileUpload">上传图片</a>
+     	                 <input type="hidden" name="image"/>
+     	            </td>
+     ```
+
+     添加class即可。   
 
 
-
-
-
-​    common-net          io        upload    的关系
 
 
 
@@ -73,7 +156,7 @@ _我有很多不同的螺丝刀，本来我的螺丝刀放在工具箱里面，�
 
 因为这是一段可以直接使用的代码，原理与上方相似，这里直接提供源码：【[ftp上传工具类](../Tools/FtpUtil.java)】。
 
-### 1.测试ftp工具类   
+### 1.测试ftp上传工具类   
 
 ```java
 	@Test
@@ -84,6 +167,23 @@ _我有很多不同的螺丝刀，本来我的螺丝刀放在工具箱里面，�
 ```
 
 _工具类已经把相应的固定代码封装起来，只要传入会变的参数就可以了。_    
+
+## 4.KindEdit插件实现上传    
+
+KindEidt上传后插件返回的数据格式为：
+
+```xml
+//成功时
+{
+        "error" : 0,
+        "url" : "http://www.example.com/path/to/file.ext"
+}
+//失败时
+{
+        "error" : 1,
+        "message" : "错误信息"
+}
+```
 
 
 
@@ -153,8 +253,7 @@ Controller调用   传来文件类型
 
 
 
-第三天   08视频  20min   快速看
+第三天   08视频    9min  实战：返回数据
 
 
 
-KindEdit文件上传     富文本框编辑器
