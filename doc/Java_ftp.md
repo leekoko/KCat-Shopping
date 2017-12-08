@@ -59,7 +59,29 @@ _我有很多不同的螺丝刀，本来我的螺丝刀放在工具箱里面，�
 
    _joda-time包装了一系列对时间处理的方法，可直接调用。_  
 
-4. 搭建好EditKinder前端    
+4. pom文件引入commons-fileupload和common-io的jar包
+
+   ```xml
+   <commons-io.version>1.3.2</commons-io.version>
+   <commons-fileupload.version>1.3.1</commons-fileupload.version>
+   ```
+
+   ```xml
+   			<dependency>
+   				<groupId>commons-net</groupId>
+   				<artifactId>commons-net</artifactId>
+   				<version>${commons-net.version}</version>
+   			</dependency>
+   			<dependency>
+   				<groupId>org.apache.commons</groupId>
+   				<artifactId>commons-io</artifactId>
+   				<version>${commons-io.version}</version>
+   			</dependency>
+   ```
+
+   该插件可以简化文件上传的处理方式。
+
+5. 搭建好EditKinder前端    
 
 - 设置编辑器参数：
 
@@ -341,9 +363,28 @@ _工具类已经把相应的固定代码封装起来，只要传入会变的参�
 
       _由于url由  （基础路径 和 图片路径 和 文件名）构成，所以这里需要进行组装。_   
 
-   ### 2.
+   ### 2.配置多部件解析器    
 
-   ​
+   SpringMVC 用的是的MultipartFile来进行文件上传 所以我们首先要配置MultipartResolver:用于处理表单中的file。
+
+   1. 在springmvc.xml中配置上传解析器    
+
+      添加下方代码：
+
+      ```xml
+      <!-- 定义文件上传解析器 -->
+      	<bean id="multipartResolver"
+      		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+      		<!-- 设定默认编码 -->
+      		<property name="defaultEncoding" value="UTF-8"></property>
+      		<!-- 设定文件上传的最大值5MB，5*1024*1024 -->
+      		<property name="maxUploadSize" value="5242880"></property>
+      	</bean>
+      ```
+
+      设置文件上传的编码，文件的大小。    
+
+   2. ​
 
 
 

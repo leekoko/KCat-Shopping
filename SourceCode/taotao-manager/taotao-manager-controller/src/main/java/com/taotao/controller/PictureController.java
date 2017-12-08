@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.taotao.common.utils.JsonUtils;
 import com.taotao.service.PictureService;
 
 public class PictureController {
@@ -15,8 +16,10 @@ public class PictureController {
 	
 	@RequestMapping("/pic/upload")
 	@ResponseBody
-	public Map pictureUpload(MultipartFile uploadFile){
-		Map map= pictureService.uploadPicture(uploadFile);
-		return map;
+	public String pictureUpload(MultipartFile uploadFile){
+		Map result= pictureService.uploadPicture(uploadFile);
+		//为了兼容火狐，将java对象转成json字符串
+		String json = JsonUtils.objectToJson(result);
+		return json;
 	}
 }
