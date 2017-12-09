@@ -82,12 +82,14 @@ var TT = TAOTAO = {
         	}
         	//给“上传图片按钮”绑定click事件
         	$(e).click(function(){
+        		debugger;
         		var form = $(this).parentsUntil("form").parent("form");
         		//打开图片上传窗口
         		KindEditor.editor(TT.kingEditorParams).loadPlugin('multiimage',function(){
         			var editor = this;
         			editor.plugin.multiImageDialog({
 						clickFn : function(urlList) {
+							debugger;
 							var imgArray = [];
 							KindEditor.each(urlList, function(i, data) {
 								imgArray.push(data.url);

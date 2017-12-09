@@ -11,10 +11,8 @@
 
 ### 5.[easyUI tree插件](doc/easyUI_tree.md)     
 
-### 6.[Java代码实现ftp上传](doc/Java_ftp.md)      
+### 6.[KindEditor图片上传](doc/KindEditor_upload.md)      
+
+### 7.[富文本编辑器](doc/RichTextEditor.md)
 
 
-
-
-
-第三天     视频5

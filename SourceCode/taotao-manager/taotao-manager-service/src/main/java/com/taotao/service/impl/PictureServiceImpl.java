@@ -6,13 +6,14 @@ import java.util.Map;
 
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.taotao.common.utils.FtpUtil;
 import com.taotao.common.utils.IDUtils;
 import com.taotao.service.PictureService;
 
-
+@Service
 public class PictureServiceImpl implements PictureService{
 	
 	@Value("${FTP_ADDRESS}")
