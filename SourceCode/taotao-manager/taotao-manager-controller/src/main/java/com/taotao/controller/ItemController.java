@@ -11,9 +11,11 @@ import org.springframework.web.bind.annotation.PathVariable;
  *
  */
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.taotao.common.pojo.EUDataDridResult;
+import com.taotao.common.pojo.TaotaoResult;
 import com.taotao.pojo.TbItem;
 import com.taotao.service.ItemService;
 
@@ -35,4 +37,11 @@ public class ItemController {
 		EUDataDridResult result = itemService.getItemList(page, rows);
 		return result;
 	}
+	
+	@RequestMapping(value="/item/save",method=RequestMethod.POST)
+	@ResponseBody
+	private TaotaoResult createItem(TbItem item) {
+		return itemService.createItem(item);
+	}
+	
 }
