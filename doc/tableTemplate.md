@@ -10,7 +10,9 @@
 
 本文主要将方案二：存储模板。
 
-## 1.前端显示   
+## 1.校验是否已有参数   
+
+### 1.前端部分   
 
 前端需要的效果就是：在树节点里面点击类别，如果参数存在，就提示已存在。如果不存在，出现动态添加参数的输入框。整个前端使用easyUI实现。
 
@@ -82,6 +84,88 @@
 
 ![](../img/p16.png)  
 
+## 2.添加模板
+
+### 1.前端内容   
+
+```javascript
+		$("#itemParamAddTable .submit").click(function(){
+			var params = [];
+			var groups = $("#itemParamAddTable [name=group]");
+			groups.each(function(i,e){
+				var p = $(e).parentsUntil("ul").parent().find("[name=param]");
+				var _ps = [];
+				p.each(function(_i,_e){
+					var _val = $(_e).siblings("input").val();
+					if($.trim(_val).length>0){
+						_ps.push(_val);						
+					}
+				});
+				var _val = $(e).siblings("input").val();
+				if($.trim(_val).length>0 && _ps.length > 0){
+					params.push({
+						"group":_val,
+						"params":_ps
+					});					
+				}
+			});
+			var url = "/item/param/save/"+$("#itemParamAddTable [name=cid]").val();
+			$.post(url,{"paramData":JSON.stringify(params)},function(data){
+				if(data.status == 200){
+					$.messager.alert('提示','新增商品规格成功!',undefined,function(){
+						$(".panel-tool-close").click();
+    					$("#itemParamList").datagrid("reload");
+    				});
+				}
+			});
+		});
+```
+
+遍历每个组，获取一次该组的组名，多次该组的值，将其传到对应的url里。   
+
+1. 传带cid的url：``var url = "/item/param/save/"+$("#itemParamAddTable [name=cid]").val();``  
+2. 将json转化为String进行提交：``"paramData":JSON.stringify(params)``      
+
+### 2.Service部分   
+
+```java
+TaotaoResult insertItemParam(TbItemParam itemParam);
+```
+
+```java
+	@Override
+	public TaotaoResult insertItemParam(TbItemParam itemParam) {
+		//补全pojo
+		itemParam.setCreated(new Date());
+		itemParam.setUpdated(new Date());
+		//插入到规格参数模板表
+		itemParamMapper.insert(itemParam);
+		return TaotaoResult.ok();
+	}
+```
+
+存入前先补全其他字段的信息。
+
+### 3.Controller部分   
+
+```java
+	@RequestMapping("/save/{cid}")
+	@ResponseBody
+	public TaotaoResult insertItemParam(@PathVariable Long cid, String paramData){
+		//创建pojo对象
+		TbItemParam itemParam = new TbItemParam();
+		itemParam.setItemCatId(cid);
+		itemParam.setParamData(paramData);
+		TaotaoResult result = itemParamService.insertItemParam(itemParam);
+		return result;
+	}
+```
+
+插入到数据库的json格式：
+
+```json
+[{"group":"分组1","params":["内容a","内容b","内容c"]},{"group":"分组2","params":["内容d"]}]
+```
 
 
 
@@ -90,39 +174,12 @@
 
 
 
-4天视频8
 
 
 
 
 
 
-
-
-
-
-
-不同商品不同规格，怎么描述？？
-
-在讲什么内容？？
-
-同一类商品，项目分组相同。规格项有的不一样，跟商品关联。不同商品，分组会变化。
-
-要做的就是将商品对应的规格参数存储起来   
-
-
-
-导入sql，研究表之间的关系   
-
-解决方法：1.联三表查询     
-
-（数据太多）
-
-2.模板思路
-
-一个商品对应一个模板。   
-
-   
 
 
 
@@ -138,4 +195,4 @@
 
 
 
-4天07
+4天10
