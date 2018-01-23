@@ -8,7 +8,7 @@
 
 相似的场景还有商城产品的规格参数：一个产品有多个规格组，每个规格组的规格项也是根据产品不同有所改变。    
 
-本文主要将方案二：存储模板。
+本文数据提取用增删改查，直接上代码。而主要介绍方案二：存储模板，读取模板。
 
 ## 1.显示规格参数新建   
 
@@ -61,7 +61,7 @@
 		});
 ```
 
-从Controller判断该类目的参数是否存在，不存在就显示添加分组按钮。
+添加参数列表的准备工作：从Controller判断该类目的参数是否存在，不存在就显示添加分组按钮。
 
 ```javascript
 		$(".addGroup").click(function(){
@@ -80,7 +80,7 @@
 		 });
 ```
 
-添加分组按钮点击之后就可以添加分组，分组里面还可以添加参数。
+前端实现不定向新增分组：添加分组按钮点击之后就可以添加分组，分组里面还可以添加参数。
 
 ![](../img/p16.png)  
 
@@ -121,7 +121,7 @@
 		});
 ```
 
-遍历每个组，获取一次该组的组名，多次该组的值，将其传到对应的url里。   
+保存规格参数的方式：遍历每个组，获取一次该组的组名，多次该组的值，将其传到对应的url里。   
 
 1. 传带cid的url：``var url = "/item/param/save/"+$("#itemParamAddTable [name=cid]").val();``  
 2. 将json转化为String进行提交：``"paramData":JSON.stringify(params)``      
@@ -204,6 +204,8 @@ TaotaoResult insertItemParam(TbItemParam itemParam);
 ```
 
 ### 3.html部分   
+
+将参数内容提取出来，转化为html显示为填写表格。
 
 ```html
     changeItemParam : function(node,formId){
@@ -334,16 +336,79 @@ public TaotaoResult createItem(TbItem item,String desc,String itemParam) throws 
 	}
 ```
 
+## 5.前台展示规格参数   
 
+根据存储的json结构，将其转化为一个个值，放入html中。
 
+### 1.Service部分      
 
+```java
+public interface ItemParamItemService {
+	String getParamItemByItemId(Long itemId);
+}
+```
 
+```java
+@Service
+public class ItemParamItemServiceImpl implements ItemParamItemService {
+	
+	@Autowired
+	private TbItemParamItemMapper itemParamItemMapper;
+	
+	@Override
+	public String getParamItemByItemId(Long itemId) {
+		
+		TbItemParamItemExample example = new TbItemParamItemExample();
+		Criteria criteria = example.createCriteria();
+		criteria.andItemIdEqualTo(itemId);
+		List<TbItemParamItem> list = itemParamItemMapper.selectByExampleWithBLOBs(example);
+		if (null == list || list.isEmpty()) {
+			return "";
+		}
+		//取出参数信息
+		TbItemParamItem itemParamItem = list.get(0);
+		String paramData = itemParamItem.getParamData();
+		//把json数据转换成java对象
+		List<Map> paramList = JsonUtils.jsonToList(paramData, Map.class);
+		//将参数信息转换成html
+		StringBuffer sb = new StringBuffer(); 
+		sb.append("<table cellpadding=\"0\" cellspacing=\"1\" width=\"100%\" border=\"1\" class=\"Ptable\">\n");
+		sb.append("    <tbody>\n");
+		for (Map map : paramList) {
+			sb.append("        <tr>\n");
+			sb.append("            <th class=\"tdTitle\" colspan=\"2\">"+map.get("group")+"</th>\n");
+			sb.append("        </tr>\n");
+			List<Map> params = (List<Map>) map.get("params");
+			for (Map map2 : params) {
+				sb.append("        <tr>\n");
+				sb.append("            <td class=\"tdTitle\">"+map2.get("k")+"</td>\n");
+				sb.append("            <td>"+map2.get("v")+"</td>\n");
+				sb.append("        </tr>\n");
+			}
+		}
+		sb.append("    </tbody>\n");
+		sb.append("</table>");
+		return sb.toString();
+	}
 
+}
+```
 
+根据id查询相关的参数信息，转化为java对象，循环转化为前端代码，传到前端待显示。
 
+### 2.Controller部分
 
-4天12，添加feiman，发布
+```java
+	@RequestMapping("/items/param/item/{itemId}")
+	public String getItemParamItemById(@PathVariable Long itemId, Model model) {
+		String itemParamItem = itemParamItemService.getParamItemByItemId(itemId);
+		model.addAttribute("param1", itemParamItem);
+		//return "item-param-show";
+		return "item";
+	}
+```
 
+前端的显示效果：
 
+![](../img/p18.png)   
 
-​   
