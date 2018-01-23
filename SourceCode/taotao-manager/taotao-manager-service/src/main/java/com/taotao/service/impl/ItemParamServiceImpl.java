@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.taotao.common.pojo.TaotaoResult;
 import com.taotao.mapper.TbItemParamMapper;
+import com.taotao.pojo.TbItem;
 import com.taotao.pojo.TbItemParam;
 import com.taotao.pojo.TbItemParamExample;
 import com.taotao.pojo.TbItemParamExample.Criteria;
@@ -27,12 +28,12 @@ public class ItemParamServiceImpl implements ItemParamService {
 		TbItemParamExample example = new TbItemParamExample();
 		Criteria criteria = example.createCriteria();
 		criteria.andItemCatIdEqualTo(cid);
-		List<TbItemParam> list = itemParamMapper.selectByExample(example);
+		List<TbItemParam> list = itemParamMapper.selectByExampleWithBLOBs(example);
 		//判断有没结果
 		if(list != null && list.size() > 0){
 			return TaotaoResult.ok(list.get(0));  //查询到返回ok		
 		}
-		return null;
+		return TaotaoResult.ok();
 	}
 
 	@Override
@@ -44,5 +45,6 @@ public class ItemParamServiceImpl implements ItemParamService {
 		itemParamMapper.insert(itemParam);
 		return TaotaoResult.ok();
 	}
+
 
 }

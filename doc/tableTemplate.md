@@ -10,7 +10,7 @@
 
 本文主要将方案二：存储模板。
 
-## 1.校验是否已有参数   
+## 1.显示规格参数新建   
 
 ### 1.前端部分   
 
@@ -84,7 +84,7 @@
 
 ![](../img/p16.png)  
 
-## 2.添加模板
+## 2.保存新建规格参数
 
 ### 1.前端内容   
 
@@ -167,6 +167,172 @@ TaotaoResult insertItemParam(TbItemParam itemParam);
 [{"group":"分组1","params":["内容a","内容b","内容c"]},{"group":"分组2","params":["内容d"]}]
 ```
 
+## 3.显示已有规格参数
+
+### 1.Service部分   
+
+```java
+	TaotaoResult getItemParamByCid(Long cid);
+```
+
+```java
+	@Override
+	public TaotaoResult getItemParamByCid(Long cid) {
+		TbItemParamExample example = new TbItemParamExample();
+		Criteria criteria = example.createCriteria();
+		criteria.andItemCatIdEqualTo(cid);
+		List<TbItemParam> list = itemParamMapper.selectByExampleWithBLOBs(example);
+		//判断有没结果
+		if(list != null && list.size() > 0){
+			return TaotaoResult.ok(list.get(0));  //查询到返回ok		
+		}
+		return null;
+	}
+```
+
+用``selectByExampleWithBLOBs`` ,而不用``selectByExample``,是因为逆向工程的 ``selectByExample``是查询不到大文本列的。
+
+### 2.Controller部分   
+
+```java
+	@RequestMapping("/query/itemcatid/{itemCatId}")
+	@ResponseBody
+	public TaotaoResult getItemParamByCid(@PathVariable Long itemCatId){
+		TaotaoResult result = itemParamService.getItemParamByCid(itemCatId);
+		return result;
+	}
+```
+
+### 3.html部分   
+
+```html
+    changeItemParam : function(node,formId){
+    	$.getJSON("/item/param/query/itemcatid/" + node.id,function(data){
+			  if(data.status == 200 && data.data){
+				 $("#"+formId+" .params").show();
+				 var paramData = JSON.parse(data.data.paramData);
+				 var html = "<ul>";
+				 for(var i in paramData){
+					 var pd = paramData[i];
+					 html+="<li><table>";
+					 html+="<tr><td colspan=\"2\" class=\"group\">"+pd.group+"</td></tr>";
+					 
+					 for(var j in pd.params){
+						 var ps = pd.params[j];
+						 html+="<tr><td class=\"param\"><span>"+ps+"</span>: </td><td><input autocomplete=\"off\" type=\"text\"/></td></tr>";
+					 }
+					 
+					 html+="</li></table>";
+				 }
+				 html+= "</ul>";
+				 $("#"+formId+" .params td").eq(1).html(html);
+			  }else{
+				 $("#"+formId+" .params").hide();
+				 $("#"+formId+" .params td").eq(1).empty();
+			  }
+		  });
+    },
+```
+
+如果存在参数列表，就会显示出来：
+
+![](../img/p17.png)  
+
+## 4.保存已有规格参数值   
+
+在原有保存参数信息的方法中添加保存参数值的方法，保存到参数值表中。
+
+### 1.html部分  
+
+```javascript
+	//提交表单
+	function submitForm(){
+		//有效性验证
+		if(!$('#itemAddForm').form('validate')){
+			$.messager.alert('提示','表单还未填写完成!');
+			return ;
+		}
+		//取商品价格，单位为“分”
+		$("#itemAddForm [name=price]").val(eval($("#itemAddForm [name=priceView]").val()) * 100);
+		//同步文本框中的商品描述
+		itemAddEditor.sync();
+		//取商品的规格
+		var paramJson = [];
+		$("#itemAddForm .params li").each(function(i,e){
+			var trs = $(e).find("tr");
+			var group = trs.eq(0).text();
+			var ps = [];
+			for(var i = 1;i<trs.length;i++){
+				var tr = trs.eq(i);
+				ps.push({
+					"k" : $.trim(tr.find("td").eq(0).find("span").text()),
+					"v" : $.trim(tr.find("input").val())
+				});
+			}
+			paramJson.push({
+				"group" : group,
+				"params": ps
+			});
+		});
+		//把json对象转换成字符串
+		paramJson = JSON.stringify(paramJson);
+		$("#itemAddForm [name=itemParams]").val(paramJson);
+		//ajax的post方式提交表单
+		//$("#itemAddForm").serialize()将表单序列号为key-value形式的字符串
+		$.post("/item/save",$("#itemAddForm").serialize(), function(data){
+			if(data.status == 200){
+				$.messager.alert('提示','新增商品成功!');
+			}
+		});
+	}
+```
+
+遍历所有填入的信息，将其放在一个input标签中，然后序列化该标签进行提交。    
+
+### 2.Controller部分   
+
+**createItem方法** 添加``String itemParams``参数的接收。
+
+### 3.Service部分   
+
+```java
+	TaotaoResult createItem(TbItem item,String desc, String itemParam) throws Exception;
+```
+
+添加一个参数，用来接收参数列表的值。
+
+在保存参数的时候，调用以下方法来保存参数值：
+
+```java
+public TaotaoResult createItem(TbItem item,String desc,String itemParam) throws Exception{
+...		
+		//添加规格参数
+		result = insertItemParamItem(itemId, itemParam);
+		if(result.getStatus() != 200){
+			throw new Exception();
+		}
+...
+```
+
+```java
+	/**
+	 * 添加规格参数  
+	 * @param itemId
+	 * @param itemParam
+	 * @return
+	 */
+	private TaotaoResult insertItemParamItem(Long itemId, String itemParam){
+		//创建pojo
+		TbItemParamItem itemParamItem = new TbItemParamItem();
+		itemParamItem.setItemId(itemId);
+		itemParamItem.setParamData(itemParam);
+		itemParamItem.setCreated(new Date());
+		itemParamItem.setUpdated(new Date());
+		//向表中插入数据   
+		tbItemParamItemMapper.insert(itemParamItem);
+		return TaotaoResult.ok();
+	}
+```
 
 
 
@@ -176,23 +342,8 @@ TaotaoResult insertItemParam(TbItemParam itemParam);
 
 
 
-
-
-
-
-
-
+4天12，添加feiman，发布
 
 
 
 ​   
-
-实现，记录，feiman内容，发文
-
-简单的部分快速跑过！
-
-
-
-
-
-4天10
