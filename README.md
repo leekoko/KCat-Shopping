@@ -17,5 +17,14 @@
 
 ### 8.[java多表插入](doc/insertSurfaces.md)      
 
-### 9.[数据表存储模板](doc/tableTemplate.md)  
+### 9.[数据表存储模板](doc/tableTemplate.md)     
 
+### 10.[前后端分离](doc/frontAndBack.md)  
+
+
+
+
+
+
+
+[论文](doc/paper.md)
