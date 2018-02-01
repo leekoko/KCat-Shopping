@@ -16,7 +16,7 @@
 
 #### 4.依赖jar包
 
-直接依赖整个模块，把相关的jar包都继承过来
+直接依赖整个模块，把相关的jar包都继承过来。
 
 ```xml
   <dependencies>
@@ -27,6 +27,8 @@
   	</dependency>
   </dependencies>
 ```
+
+依赖dao层。   
 
 ​    
 
