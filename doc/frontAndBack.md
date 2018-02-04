@@ -186,13 +186,25 @@
 
 ### 2.添加web.xml
 
-修改过滤拦截：html伪静态化
+修改前端控制器&过滤拦截：html伪静态化
 
 ```xml
 	<servlet-mapping>
 		<servlet-name>taotao-portal</servlet-name>
 		<url-pattern>*.html</url-pattern>
 	</servlet-mapping>
+...
+	<!-- springmvc的前端控制器 -->
+	<servlet>
+		<servlet-name>taotao-portal</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<!-- contextConfigLocation不是必须的， 如果不配置contextConfigLocation， springmvc的配置文件默认在：WEB-INF/servlet的name+"-servlet.xml" -->
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>classpath:spring/springmvc.xml</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
 ```
 
 ### 3.框架整合
@@ -240,7 +252,7 @@
 
 
 
-
+先解决双tomcat问题，再解决跨域问题，用DZM
 
 
 
