@@ -251,10 +251,61 @@ js不能进行跨域请求，js设计时为了安全考虑。域名相同，端�
 
 可以使用jsonp解决跨域问题。js跨域请求数据不行，js请求js脚本可以。   
 
-将json数据变成js语句，然后追加到请求中。    
+将json数据变成js语句（在json前面添加category.getDateService(...)），然后追加到请求中。    
 
 怎么提取后台的数据
 
+## 3.查询数据   
+
+### 1.新建pojo   
+
+D:
+
+```java
+public class CatNode {
+	
+	@JsonProperty("n")
+	private String name;
+	@JsonProperty("u")
+	private String url;
+	@JsonProperty("i")
+	private List<?> item;
+
+	public String getName() {
+      ...
+```
+
+M:@JsonProperty("i")在这里的作用是什么？
+
+Z:@JsonProperty 此注解用于属性上，作用是把该属性的名称序列化为另外一个名称，如把trueName属性序列化为name，@JsonProperty(value="name")。   
+
+M:也就是说它就是用来说明json的key部分内容。
+
+D:还有一个pojo
+
+```java
+public class CatResult {
+	private List<?> data;
+  ...
+```
+
+M:这个POJO用来干嘛？
+
+Z:因为json的 n，u，i外层还包了一个data
+
+### 2.编写Service   
+
+D:
+
+```java
+public interface ItemCatService {
+	CatResult getItemCatList();
+}
+```
+
+
+
+处理两个tomcat问题，启动之后，记录各种过程
 
 
 
@@ -264,7 +315,21 @@ js不能进行跨域请求，js设计时为了安全考虑。域名相同，端�
 
 
 
-先解决双tomcat问题，再解决跨域问题，用DZM
+9:09
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -311,20 +376,6 @@ js不能进行跨域请求，js设计时为了安全考虑。域名相同，端�
 
 
 5天03天10min
-
-
-
-
-
-
-
-##  导航的制作   
-
-
-
-
-
-
 
 
 
