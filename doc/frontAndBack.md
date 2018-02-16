@@ -253,8 +253,6 @@ js不能进行跨域请求，js设计时为了安全考虑。域名相同，端�
 
 将json数据变成js语句（在json前面添加category.getDateService(...)），然后追加到请求中。    
 
-怎么提取后台的数据
-
 ## 3.查询数据   
 
 ### 1.新建pojo   
@@ -303,111 +301,111 @@ public interface ItemCatService {
 }
 ```
 
+```java
+	@Override
+	public CatResult getItemCatList() {
+		CatResult catResult = new CatResult();
+		//查询分类列表
+		catResult.setData(getCatList(0));
+		return catResult;
+	}
+```
+
+```java
+	private List<?> getCatList(long parentId){
+		//创建查询条件
+		TbItemCatExample example = new TbItemCatExample();
+		Criteria criteria = example.createCriteria();
+		criteria.andParentIdEqualTo(parentId);
+		List<TbItemCat> list = itemCatMapper.selectByExample(example);
+		//返回值list
+		List resultList = new ArrayList<>();
+		int count = 0;
+		for (TbItemCat tbItemCat : list) {
+			//判断是否为叶子节点
+			if(tbItemCat.getIsParent()){
+				CatNode catNode = new CatNode();
+				if(parentId == 0){    //第一层
+					catNode.setName("<a href='/products/"+tbItemCat.getId()+".html'>"+tbItemCat.getName()+"</a>");
+				}else{
+					catNode.setName(tbItemCat.getName());
+				}
+				catNode.setUrl("/products/"+tbItemCat.getId()+".html");
+				catNode.setItem(getCatList(tbItemCat.getId()));
+				resultList.add(catNode);
+				count ++;
+				//第一级只取11条
+				if(parentId == 0 && count >= 14){
+					break;
+				}
+			}else{
+				resultList.add("/products/"+tbItemCat.getId()+".html|"+tbItemCat.getName());
+			}
+		}
+		return resultList;
+	}
+```
+
+M:最后一个方法parentId是什么？
+
+Z:parentId是该类别的等级，它传进去0说明获取第一等级的数据。
+
+M:那  ``if(tbItemCat.getIsParent()){`` 的作用是什么？
+
+Z:getIsParent()是tbItemCat的一个方法，这主要是由于tbItemCat表中有该属性。它的类型为tinyint，在 MySql 中还没有严格的 bool 类型，但使用 TINYINT(1) 隐式用作 bool 类型，零作为false，而非零值（包括负数）作为true。   
+
+M:那这里就是做出了区分，如果没有子类，就直接显示名字（最大的类目，下图A）。有子类的话...CatNode是干嘛用的？
+
+Z:CatNode是一个专门为json格式创建的pojo对象。它的属性主要有以下三个：
+
+```java
+	@JsonProperty("n")
+	private String name;
+	@JsonProperty("u")
+	private String url;
+	@JsonProperty("i")
+	private List<?> item;
+```
+
+M:为什么setName有分两种
+
+Z:parentId为0说明还有子类目，则使用带a标签(中大的类目，下图B)，否则直接显示文字（具体的类目C）。
+
+M: ``if(parentId == 0 && count >= 14){``  的作用是什么？
+
+Z:对第一级数目限制在14个以内。为了详细说明三种分类，图片如下：
+
+![](../img/p22.png)  
+
+M:``					catNode.setName("<a href='/products/"+tbItemCat.getId()+".html'>"+tbItemCat.getName()+"</a>");``  下面已经setUrl，为什么在name中还要添加< a >标签。    
+
+Z:这个可能得等跳转功能实现之后再说了。
+
+D:这里的前后端分离只要在于Controller的传输：
+
+```java
+	@RequestMapping(value="/itemcat/list")
+	@ResponseBody
+	public Object getItemCatList(String callback){
+		CatResult catResult = itemCatService.getItemCatList();
+		MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(catResult);
+		mappingJacksonValue.setJsonpFunction(callback);
+		return mappingJacksonValue;
+	}
+```
+
+M:这里的CatResult是什么？
+
+Z:CatResult就只是一个List，因为json数据的格式需要所以创建的pojo。
+
+M:  ``MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(catResult);``  作用是什么？
+
+Z:  针对显式注解 @ResponseBody 的方法 (我们本来就是直接响应JSON的)，而由于跨域问题，需要使用 MappingJacksonValue 进行封装处理。   
+
+M: 这里就是将获取到的List数据作为json封装进一个方法里。     ``mappingJacksonValue.setJsonpFunction(callback);``  作用又是什么？
 
+Z:  callback的内容是  category.getDataService。而在js调用里面就有对应的category.getDataService方法。    
 
-处理两个tomcat问题，启动之后，记录各种过程
+M: 那也就是说，调用  /itemcat/list 的方法之后，他就会把  数据 + 调用方法名  一起包装成一个 Object 方法返回。而前端拿到Object方法之后，就会找到该调用方法名，把数据拿进去处理，进行显示。由于前端处理那一部分写得比较乱，就不麻烦两位前辈了。目前实现了如下效果的目录显示：
 
-
-
-
-
-
-
-
-
-9:09
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-分层：  web工程   +   表现层
-
-
-
-新建工程：taotao-reset    
-
-属于服务层    
-
-使用ssm发布服务
-
-添加pom，添加项目的依赖
-
-添加web.xml   ，伪静态化
-
-添加配置文件，参考之前   
-
-安装到本地仓库   
-
-修改端口，启动执行新建的模块   
-
-修改配置文件   
-
-配置tomcat
-
-添加jsp页面，其他资源
-
-处理返回的编码问题，两种方式     
-
-
-
-
-
-怎么处理多个tomcat启动   
-
-
-
-
-
-
-
-5天03天10min
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-feiman关注重要一个点：关注前后端分离，其他实现即可。学这个原因因为kcat用到
-
-feiman老少     发布
-
-
-
+![](../img/p23.png)          
