@@ -22,9 +22,3 @@
 ### 10.[前后端分离](doc/frontAndBack.md)  
 
 
-
-
-
-
-
-[论文](doc/paper.md)
