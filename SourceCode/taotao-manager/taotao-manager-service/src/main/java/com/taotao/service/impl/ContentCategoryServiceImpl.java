@@ -1,8 +1,24 @@
-# CMS系统   
+package com.taotao.service.impl;
 
-D:
+import java.util.ArrayList;
+import java.util.List;
 
-```java
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.taotao.common.pojo.EUTreeNode;
+import com.taotao.mapper.TbContentCategoryMapper;
+import com.taotao.pojo.TbContentCategory;
+import com.taotao.pojo.TbContentCategoryExample;
+import com.taotao.pojo.TbContentCategoryExample.Criteria;
+import com.taotao.service.ContentCategoryService;
+@Service
+public class ContentCategoryServiceImpl implements ContentCategoryService {
+	
+	@Autowired
+	private TbContentCategoryMapper contentCategoryMapper;
+	
+	@Override
 	public List<EUTreeNode> getCategoryList(long parentId) {
 		//根据parentId查询节点列表
 		TbContentCategoryExample example = new TbContentCategoryExample();
@@ -22,52 +38,5 @@ D:
 		}
 		return resultList;
 	}
-```
 
-M:``		List<TbContentCategory> list = contentCategoryMapper.selectByExample(example);``查询到的list是什么东西？
-
-Z:Service层
-
-![](../img/p24.png)
-
-M:也就是说，如果parentId = 30，我可能会查到   首页，列表页面，详细页面   三个模块  。那这三个模块同一个parentId是有什么共同处呢？
-
-Z:
-
-
-
-
-
-
-
-首页广告列表获取
-
-节点管理：
-
-​	添加节点实现，插入到数据库
-
-​	删除节点
-
-​	修改节点
-
-内容管理
-
-
-
-HttpClient
-
-
-
-03   8min视频做
-
-dzm分析
-
-
-
-
-
-看一部分，做一部分
-
-
-
-dzm分析
+}
