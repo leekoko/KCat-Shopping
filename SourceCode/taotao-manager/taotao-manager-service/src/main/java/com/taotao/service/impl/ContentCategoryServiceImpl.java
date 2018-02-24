@@ -1,12 +1,14 @@
 package com.taotao.service.impl;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.taotao.common.pojo.EUTreeNode;
+import com.taotao.common.pojo.TaotaoResult;
 import com.taotao.mapper.TbContentCategoryMapper;
 import com.taotao.pojo.TbContentCategory;
 import com.taotao.pojo.TbContentCategoryExample;
@@ -37,6 +39,31 @@ public class ContentCategoryServiceImpl implements ContentCategoryService {
 			resultList.add(node);
 		}
 		return resultList;
+	}
+
+	@Override
+	public TaotaoResult insertContentCategory(long parentId, String name) {
+		
+		//创建pojo
+		TbContentCategory contentCategory = new TbContentCategory();
+		contentCategory.setName(name);   //设置主键返回
+		contentCategory.setIsParent(false);  //新的叶子节点
+		contentCategory.setStatus(1);  //1 正常   2 删除
+		contentCategory.setParentId(parentId);
+		contentCategory.setSortOrder(1);
+		contentCategory.setCreated(new Date());
+		contentCategory.setUpdated(new Date());
+		//添加记录到数据库中
+		contentCategoryMapper.insert(contentCategory);
+		//查看父节点的isParent是否为true
+		TbContentCategory parentCat = contentCategoryMapper.selectByPrimaryKey(parentId);
+		//判断是否为true
+		if(!parentCat.getIsParent()){
+			parentCat.setIsParent(true);
+			//更新父节点
+			contentCategoryMapper.updateByPrimaryKey(parentCat);
+		}
+		return TaotaoResult.ok(contentCategory);
 	}
 
 }
