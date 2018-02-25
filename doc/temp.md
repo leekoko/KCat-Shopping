@@ -65,10 +65,95 @@ Z:EUTreeNode是专门为了eTree而准备的model，这个model组成一个List�
 D:
 
 ```xml
-
+  <insert id="insertSelective" parameterType="com.taotao.pojo.TbContentCategory">
+    <selectKey keyProperty="id" resultType="long" order="AFTER" useGeneratedKeys="true">
+    	SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into tb_content_category
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="parentId != null" >
+        parent_id,
+      </if>
+...
 ```
 
+```java
+	public TaotaoResult insertContentCategory(long parentId, String name) {	
+		//创建pojo
+		TbContentCategory contentCategory = new TbContentCategory();
+		contentCategory.setName(name);   //设置主键返回
+		contentCategory.setIsParent(false);  //新的叶子节点
+		contentCategory.setStatus(1);  //1 正常   2 删除
+		contentCategory.setParentId(parentId);
+		contentCategory.setSortOrder(1);
+		contentCategory.setCreated(new Date());
+		contentCategory.setUpdated(new Date());
+		//添加记录到数据库中
+		contentCategoryMapper.insert(contentCategory);
+		//查看父节点的isParent是否为true
+		TbContentCategory parentCat = contentCategoryMapper.selectByPrimaryKey(parentId);
+		//判断是否为true
+		if(!parentCat.getIsParent()){
+			parentCat.setIsParent(true);
+			//更新父节点
+			contentCategoryMapper.updateByPrimaryKey(parentCat);
+		}
+		return TaotaoResult.ok(contentCategory);
+	}
+```
 
+M:
+
+```java
+    <selectKey keyProperty="id" resultType="long" order="AFTER">
+    	SELECT LAST_INSERT_ID()
+    </selectKey>
+```
+
+这个是用来干嘛的？
+
+Z:它可以做在 keyProperty="id"列返回插入后生成的id值，order="AFTER"表示在执行sql之后。
+
+而他返回的id值不需要进行获取，会自动添加到``contentCategoryMapper.insert(contentCategory);``的contentCategory中。
+
+M:那这一段的作用是什么？
+
+```java
+		//查看父节点的isParent是否为true
+		TbContentCategory parentCat = contentCategoryMapper.selectByPrimaryKey(parentId);
+		//判断是否为true
+		if(!parentCat.getIsParent()){
+			parentCat.setIsParent(true);
+			//更新父节点
+			contentCategoryMapper.updateByPrimaryKey(parentCat);
+		}
+```
+
+Z:因为在一个叶子节点下一级添了一个叶子节点，所以原先的叶子节点就变成父节点，所以需要改变其父节点的``IsParent``为true，说明它是父节点。
+
+M:那判断是不是父节点的作用无非就是节省``updateByPrimaryKey``的次数咯。
+
+M:为什么每次都要返回生成的id呢？
+
+D:Controller中
+
+```java
+	@RequestMapping("/create")
+	@ResponseBody	
+	public TaotaoResult createContentCategory(Long parentId,String name){
+		TaotaoResult result = contentCategoryService.insertContentCategory(parentId, name);
+		return result;
+	}
+```
+
+Z:因为他新增叶子节点调用Controller的时候需要传父id过来，还有新增的名字。而返回的id其实就会成为它子节点的parentId，拥有  父节点的id + 名字  就可以生成一个子节点了。
+
+M:那``SortOrder``是干嘛用的？
+
+Z:表示同级类目的展现次序，如数值相等则按名称次序排列。取值范围:大于零的整数。
 
 
 
@@ -110,7 +195,7 @@ HttpClient
 
 
 
-04  视频做
+05  视频做
 
 dzm分析
 

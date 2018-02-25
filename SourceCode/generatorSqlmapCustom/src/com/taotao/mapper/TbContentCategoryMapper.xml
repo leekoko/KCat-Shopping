@@ -103,7 +103,7 @@
     </if>
   </delete>
   <insert id="insert" parameterType="com.taotao.pojo.TbContentCategory">
-    <selectKey keyProperty="id" useGeneratedKeys="true" resultType="long" order="AFTER">
+    <selectKey keyProperty="id" resultType="long" order="AFTER">
     	SELECT LAST_INSERT_ID()
     </selectKey>
     insert into tb_content_category (id, parent_id, name, 
@@ -114,7 +114,7 @@
       #{created,jdbcType=TIMESTAMP}, #{updated,jdbcType=TIMESTAMP})
   </insert>
   <insert id="insertSelective" parameterType="com.taotao.pojo.TbContentCategory">
-    <selectKey keyProperty="id" resultType="long" order="AFTER" useGeneratedKeys="true">
+    <selectKey keyProperty="id" resultType="long" order="AFTER">
     	SELECT LAST_INSERT_ID()
     </selectKey>
     insert into tb_content_category
