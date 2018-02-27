@@ -155,6 +155,47 @@ M:那``SortOrder``是干嘛用的？
 
 Z:表示同级类目的展现次序，如数值相等则按名称次序排列。取值范围:大于零的整数。
 
+D:
+
+```java
+	@Override
+	public TaotaoResult deleteByPrimaryKey(long id, long parentId) {
+		//删除记录
+		contentCategoryMapper.deleteByPrimaryKey(id);
+		//判断是否父节点是否变空
+		TbContentCategoryExample example = new TbContentCategoryExample();
+		Criteria criteria = example.createCriteria();
+		criteria.andParentIdEqualTo(parentId);
+		List<TbContentCategory> list = contentCategoryMapper.selectByExample(example);
+		if(list.size()==0){    //子节点为空
+			TbContentCategory parentCat = contentCategoryMapper.selectByPrimaryKey(parentId);
+			parentCat.setIsParent(false);
+		}
+		return TaotaoResult.ok();
+	}
+```
+
+M:能解释下获取值的过程吗？
+
+```java
+		TbContentCategoryExample example = new TbContentCategoryExample();
+		Criteria criteria = example.createCriteria();
+		criteria.andParentIdEqualTo(parentId);
+		List<TbContentCategory> list = contentCategoryMapper.selectByExample(example);
+```
+
+Z:这是该逆向工程数据库的查询过程。
+
+​	工具:首先需要一个**example**，通过example创建一个**criteria**，注入一个**mapper**对象。
+
+​	过程:criteria用来存值，example作为mapper对象方法的值。
+
+M:为什么删除旧的树节点时，传过来的parentId为空，而数据库却已有该字段？
+
+Z:这个涉及到eTree创建的方式，到时再研究，目前还是不知道，有其他人知道吗？
+
+D:
+
 
 
 
@@ -195,7 +236,7 @@ HttpClient
 
 
 
-05  视频做
+06  视频做
 
 dzm分析
 
