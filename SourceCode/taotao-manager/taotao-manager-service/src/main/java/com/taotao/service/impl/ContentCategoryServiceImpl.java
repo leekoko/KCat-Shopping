@@ -82,4 +82,16 @@ public class ContentCategoryServiceImpl implements ContentCategoryService {
 		return TaotaoResult.ok();
 	}
 
+	@Override
+	public TaotaoResult updateByPrimaryKey(long id, String name) {
+		TbContentCategory tbContentCategory = contentCategoryMapper.selectByPrimaryKey(id);
+		tbContentCategory.setName(name);
+		int result = contentCategoryMapper.updateByPrimaryKeySelective(tbContentCategory);
+		if(result > 0){
+			return TaotaoResult.ok();
+		}else{
+			return null;
+		}
+	}
+
 }

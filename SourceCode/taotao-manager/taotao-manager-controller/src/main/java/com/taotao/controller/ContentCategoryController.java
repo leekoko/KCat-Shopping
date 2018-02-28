@@ -32,6 +32,18 @@ public class ContentCategoryController {
 		TaotaoResult result = contentCategoryService.insertContentCategory(parentId, name);
 		return result;
 	}
+	/**
+	 * 修改节点
+	 * @param id
+	 * @param name
+	 * @return
+	 */
+	@RequestMapping("/update")
+	@ResponseBody	
+	public TaotaoResult updateContentCategory(Long id,String name){
+		TaotaoResult result = contentCategoryService.updateByPrimaryKey(id, name);
+		return result;
+	}
 	
 	@RequestMapping("/delete")
 	@ResponseBody	
