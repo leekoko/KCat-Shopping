@@ -194,19 +194,58 @@ M:为什么删除旧的树节点时，传过来的parentId为空，而数据库�
 
 Z:这个涉及到eTree创建的方式，到时再研究，目前还是不知道，有其他人知道吗？
 
-D:
+D:eTree配合Dategrid显示，这里主要是pageHelper的使用。
 
+![](../img/p27.png)  
 
+```java
+	public EUDataDridResult getContentList(int page, int rows, long categoryId) {
+		
+		TbContentExample example = new TbContentExample();
+		//分页处理   
+		PageHelper.startPage(page, rows);
+		Criteria criteria = example.createCriteria();
+		criteria.andCategoryIdEqualTo(categoryId);
+		List<TbContent> list = contentMapper.selectByExample(example);   
+		
+		//创建返回值对象   
+		EUDataDridResult result = new EUDataDridResult();
+		result.setRows(list);
+		//取分页信息
+		PageInfo<TbContent> pageInfo = new PageInfo<>(list);
+		result.setTotal(pageInfo.getTotal());
+		return result;
+	}
+```
 
-根据id查询内容列表，实现分页，返回EuDATAgRIDrESULT
+M:``PageHelper.startPage(page, rows);``在这里的作用是什么？
 
+Z:这是分页插件的方法
 
+1. ``PageHelper.startPage(page, rows);``告诉插件查询第几页，多少条数据.
+2. 则获取当前的总条数
 
+```java
+		PageInfo<TbContent> pageInfo = new PageInfo<>(list);
+		result.setTotal(pageInfo.getTotal());
+```
 
+M:那为什么要把数据放进``EUDataDridResult``里呢？
 
+D:``EUDataDridResult`` 的pojo
 
+```java
+public class EUDataDridResult {
+	private long total;
+	private List<?> rows;
+  ...
+```
 
+Z:``EUDataDridResult``存放的是 列信息 和 数据的长度，当它返回给datagrid的时候，datagrid就会根据该pojo将数据进行显示。
 
+M:那`` long categoryId``的作用是？
+
+Z:因为是树节点，eTree每点击一下就会把``categoryId``作为参数传给Controller
 
 
 
@@ -238,14 +277,6 @@ HttpClient
 
 dzm分析
 
-
-
-
-
 看一部分，做一部分
-
-
-
-
 
 09  视频做
