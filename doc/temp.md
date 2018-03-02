@@ -245,7 +245,85 @@ Z:``EUDataDridResult``存放的是 列信息 和 数据的长度，当它返回�
 
 M:那`` long categoryId``的作用是？
 
-Z:因为是树节点，eTree每点击一下就会把``categoryId``作为参数传给Controller
+Z:因为是树节点，eTree每点击一下就会把``categoryId``作为参数传给Controller。
+
+D:返回状态处理Controller
+
+```java
+	@RequestMapping("/list/{contentCategoryId}")
+	@ResponseBody
+	public TaotaoResult getContentList(@PathVariable Long contentCategoryId){
+		try {
+			List<TbContent> list = contentService.getContentList(contentCategoryId);
+			return TaotaoResult.ok(list);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return TaotaoResult
+					.build(500, ExceptionUtil.getStackTrace(e));  //出错状态码,错误消息 
+		}
+	}
+```
+
+M:为什么要包try...catch
+
+Z:获取可能失败，所以要对过程捕捉异常处理。
+
+M:那``return TaotaoResult.ok(list);``的list作用是什么？
+
+D:ok()方法
+
+```java
+    public static TaotaoResult ok(Object data) {
+        return new TaotaoResult(data);
+    }
+    public TaotaoResult(Object data) {
+        this.status = 200;
+        this.msg = "OK";
+        this.data = data;
+    }
+```
+
+Z:当我们返回ok方法时，他就会将 **list + 状态码 + 状态信息 ** 进行返回
+
+M:那build方法``return TaotaoResult.build(500, ExceptionUtil.getStackTrace(e)); `` 呢？
+
+D:build()方法 
+
+```java
+    public static TaotaoResult build(Integer status, String msg) {
+        return new TaotaoResult(status, msg, null);
+    }
+```
+
+Z:与ok()方法相似, 区别就是build()方法的状态码和状态信息由自己手动添加。
+
+M:但是状态信息要怎么写呢，状态码对应的状态信息我也不清楚呢？
+
+Z:所以这里提供了工具类``ExceptionUtil``，用来返回状态信息：``ExceptionUtil.getStackTrace(e)``。
+
+D:其实也不过是控制台的信息toString返回而已
+
+```java
+	public static String getStackTrace(Throwable t) {
+		StringWriter sw = new StringWriter();
+		PrintWriter pw = new PrintWriter(sw);
+
+		try {
+			t.printStackTrace(pw);
+			return sw.toString();
+		} finally {
+			pw.close();
+		}
+	}
+```
+
+D:
+
+
+
+
+
+
 
 
 
