@@ -317,7 +317,179 @@ D:其实也不过是控制台的信息toString返回而已
 	}
 ```
 
-D:
+M:怎么让轮播图显示呢？
+
+D:protal工程的Service文件
+
+```java
+	@Value("${REST_BASE_URL}")
+	private String REST_BASE_URL;
+	@Value("${REST_INDEX_AD_URL}")
+	private String REST_INDEX_AD_URL;
+	
+	@Override
+	public String getContentList() {
+		//调用服务层的服务
+		String result = HttpClientUtil.doGet(REST_BASE_URL + REST_INDEX_AD_URL);
+		//把字符串转化为TaotaoResult
+		try{
+			TaotaoResult taotaoResult = TaotaoResult.formatToList(result, TbContent.class);
+			//取内容列表
+			List<TbContent> list = (List<TbContent>)taotaoResult.getData();
+			List<Map> resultList = new ArrayList<>();
+			for (TbContent tbContent : list) {
+				Map map =new HashMap<>();
+				map.put("src", tbContent.getPic());
+				map.put("height", 240);
+				map.put("width", 670);
+				map.put("srcB", tbContent.getPic2());
+				map.put("widthB", 550);
+				map.put("heightB", 240);
+				map.put("href", tbContent.getUrl());
+				map.put("alt", tbContent.getSubTitle());
+				resultList.add(map);
+			}
+			return JsonUtils.objectToJson(resultList);
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return null;
+	}
+```
+
+M:这个注入代码是干嘛用的呢？
+
+```java
+	@Value("${REST_BASE_URL}")
+	private String REST_BASE_URL;
+```
+
+D:properties文件
+
+```properties
+#服务层属性定义
+#基础url
+REST_BASE_URL=http://localhost:8081/rest
+#首页大广告Url
+REST_INDEX_AD_URL=/content/list/89
+```
+
+Z:这就是读取配置文件的信息，注入到变量中，由于该信息可能经常变动，所以使用配置文件存起来。
+
+M:``String result = HttpClientUtil.doGet(REST_BASE_URL + REST_INDEX_AD_URL);``这段代码是干嘛用的呢？
+
+Z:``HttpClientUtil``是封装HttpClient的一个工具类，通过这个工具类能访问到指定url的数据，可以使用GET请求或者POST请求。
+
+D:doGet的源码
+
+```java
+    public static String doGet(String url) {  
+        return doGet(url, null);  
+    }     
+
+	public static String doGet(String url, Map<String, String> param) {  
+  
+        // 创建Httpclient对象  
+        CloseableHttpClient httpclient = HttpClients.createDefault();  
+  
+        String resultString = "";  
+        CloseableHttpResponse response = null;  
+        try {  
+            // 创建uri  
+            URIBuilder builder = new URIBuilder(url);  
+            if (param != null) {  
+                for (String key : param.keySet()) {  
+                    builder.addParameter(key, param.get(key));  
+                }  
+            }  
+            URI uri = builder.build();  
+  
+            // 创建http GET请求  
+            HttpGet httpGet = new HttpGet(uri);  
+  
+            // 执行请求  
+            response = httpclient.execute(httpGet);  
+            // 判断返回状态是否为200  
+            if (response.getStatusLine().getStatusCode() == 200) {  
+                resultString = EntityUtils.toString(response.getEntity(), "UTF-8");  
+            }  
+        } catch (Exception e) {  
+            e.printStackTrace();  
+        } finally {  
+            try {  
+                if (response != null) {  
+                    response.close();  
+                }  
+                httpclient.close();  
+            } catch (IOException e) {  
+                e.printStackTrace();  
+            }  
+        }  
+        return resultString;  
+    }  
+```
+
+Z:当前请求的param为null，而当添加map作为参数的时候，就可以执行带参数GET请求。
+
+M:虽然没什么作用，但我想知道HttpClient对象是怎么创建来的。``CloseableHttpClient httpclient = HttpClients.createDefault();  ``   
+
+Z:这个有点偏题, 我们只要知道它可以创建HttpClient实例即可。
+
+M:那创建uri又是怎么实现的呢？``URIBuilder builder = new URIBuilder(url);``  
+
+D: URIBuilder.class的构造方法
+
+```java
+    public URIBuilder(final String string) throws URISyntaxException {
+        super();
+        digestURI(new URI(string));
+    }
+```
+
+Z:它这里调用了``super()``方法,该方法是调用父类的构造函数，其父类为Object，
+
+```java
+    private static native void registerNatives();
+    static {
+        registerNatives();
+    }
+```
+
+从上面的代码中看到Object类定义了一个静态初始化块，我们知道当创建Java对象时，系统总是先调用静态初始化块，静态初始化块中调用了registerNatives()方法，在Java中使用 **native ** 关键字修饰的方法，说明此方法并不是由Java中完成的，而是通过C/C++来完成的，并被编译成.dll，之后才由Java调用。方法的具体实现是在dll文件中，当然对于不同平台实现的细节也有所不同，以上registerNatives()方法主要作用就是将C/C++中的方法映射到Java中的native方法，实现方法命名的解耦。([来源](http://blog.csdn.net/hai_qing_xu_kong/article/details/43898977))
+
+而``digestURI(new URI(String))``的方法则执行了以下多个方法，这里将不深入做研究了：
+
+```java
+    private void digestURI(final URI uri) {
+        this.scheme = uri.getScheme();
+        this.encodedSchemeSpecificPart = uri.getRawSchemeSpecificPart();
+        this.encodedAuthority = uri.getRawAuthority();
+        this.host = uri.getHost();
+        this.port = uri.getPort();
+        this.encodedUserInfo = uri.getRawUserInfo();
+        this.userInfo = uri.getUserInfo();
+        this.encodedPath = uri.getRawPath();
+        this.path = uri.getPath();
+        this.encodedQuery = uri.getRawQuery();
+        this.queryParams = parseQuery(uri.getRawQuery(), Consts.UTF_8);
+        this.encodedFragment = uri.getRawFragment();
+        this.fragment = uri.getFragment();
+    }
+```
+
+
+
+
+
+
+
+代码
+
+处理图片不显示问题
+
+整理发布
+
+下个视频
 
 
 
@@ -329,32 +501,3 @@ D:
 
 
 
-
-
-
-
-
-
-首页广告列表获取
-
-节点管理：
-
-​	添加节点实现，插入到数据库
-
-​	删除节点
-
-​	修改节点
-
-内容管理
-
-
-
-HttpClient
-
-
-
-dzm分析
-
-看一部分，做一部分
-
-09  视频做
