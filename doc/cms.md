@@ -1,4 +1,4 @@
-# CMS系统   
+# CMS系统搭建   
 
 D:
 
@@ -506,33 +506,46 @@ D:TaotaoResult.java里的``formatToList()``方法
 
 Z:``jsonData``是传过来的json数据，而``clazz``是指定的pojo，该方法会将json数据根据pojo将其转化为pojo对象。
 
-D:
+M:for里面的数据应该是给属性赋值吧，但是在前端是怎么使用这些属性的呢？
 
+```java
+			for (TbContent tbContent : list) {
+				Map map =new HashMap<>();
+				map.put("src", tbContent.getPic());
+				map.put("height", 240);
+				map.put("width", 670);
+				map.put("srcB", tbContent.getPic2());
+				map.put("widthB", 550);
+				map.put("heightB", 240);
+				map.put("href", tbContent.getUrl());
+				map.put("alt", tbContent.getSubTitle());
+				resultList.add(map);
+			}
+```
 
+Z:它在下面把map数据转化为json字符串之后，它就会返回给Controller页面，最后到达index.jsp页面。index.jsp页面会将数据逐个提取出来，拼接成标签进行显示：
 
+```javascript
+;(function(cfg, doc) {
+    if ( !cfg.DATA_MSlide ) {
+        cfg.DATA_MSlide=[];
+    }
+	var data = ${ad1};
+    cfg.DATA_MSlide = data;
+    // 初始化一个广告信息
+    if ( cfg.DATA_MSlide.length > 1 ) {
+    	var first = pageConfig.FN_GetCompatibleData( cfg.DATA_MSlide[0] );
+        var TPL = ''
+            +'<ul class="slide-items">'
+            +'<li clstag="homepage|keycount|home2013|09a1">'
+            +'<a href="'+ first.href +'" target="_blank" title="'+ first.alt +'">'
+            +'<img src="'+ first.src +'" width="'+ first.width +'" height="'+ first.height +'" >'
+            +'</a>'
+            +'</li>'
+            +'</ul><div class="slide-controls"><span class="curr">1</span></div>';
+        doc.write(TPL);
+    }
+})(pageConfig, document);;
+```
 
-
-
-
-
-
-
-
-代码
-
-处理图片不显示问题
-
-整理发布
-
-下个视频
-
-
-
-
-
-
-
-
-
-
-
+M:原来是这样实现轮播图管理的。
