@@ -457,7 +457,7 @@ Z:它这里调用了``super()``方法,该方法是调用父类的构造函数，
 
 从上面的代码中看到Object类定义了一个静态初始化块，我们知道当创建Java对象时，系统总是先调用静态初始化块，静态初始化块中调用了registerNatives()方法，在Java中使用 **native ** 关键字修饰的方法，说明此方法并不是由Java中完成的，而是通过C/C++来完成的，并被编译成.dll，之后才由Java调用。方法的具体实现是在dll文件中，当然对于不同平台实现的细节也有所不同，以上registerNatives()方法主要作用就是将C/C++中的方法映射到Java中的native方法，实现方法命名的解耦。([来源](http://blog.csdn.net/hai_qing_xu_kong/article/details/43898977))
 
-而``digestURI(new URI(String))``的方法则执行了以下多个方法，这里将不深入做研究了：
+而``digestURI(new URI(String))``的方法则执行了以下多个方法，这里将不深入做研究了，关于一些源码，大概知道既可以了：
 
 ```java
     private void digestURI(final URI uri) {
@@ -476,6 +476,41 @@ Z:它这里调用了``super()``方法,该方法是调用父类的构造函数，
         this.fragment = uri.getFragment();
     }
 ```
+
+M:那代码``TaotaoResult taotaoResult = TaotaoResult.formatToList(result, TbContent.class);``是用来干嘛的呢？
+
+D:TaotaoResult.java里的``formatToList()``方法  
+
+```java
+    /**
+     * Object是集合转化
+     * @param jsonData json数据
+     * @param clazz 集合中的类型
+     * @return
+     */
+    public static TaotaoResult formatToList(String jsonData, Class<?> clazz) {
+        try {
+            JsonNode jsonNode = MAPPER.readTree(jsonData);
+            JsonNode data = jsonNode.get("data");
+            Object obj = null;
+            if (data.isArray() && data.size() > 0) {
+                obj = MAPPER.readValue(data.traverse(),
+                        MAPPER.getTypeFactory().constructCollectionType(List.class, clazz));
+            }
+            return build(jsonNode.get("status").intValue(), jsonNode.get("msg").asText(), obj);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+```
+
+Z:``jsonData``是传过来的json数据，而``clazz``是指定的pojo，该方法会将json数据根据pojo将其转化为pojo对象。
+
+D:
+
+
+
+
 
 
 
