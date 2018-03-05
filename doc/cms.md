@@ -506,6 +506,28 @@ D:TaotaoResult.java里的``formatToList()``方法
 
 Z:``jsonData``是传过来的json数据，而``clazz``是指定的pojo，该方法会将json数据根据pojo将其转化为pojo对象。
 
+M:httpClient是怎么把数据传过来的。
+
+D:doGet的另一端
+
+```java
+	@RequestMapping("/list/{contentCategoryId}")
+	@ResponseBody
+	public TaotaoResult getContentList(@PathVariable Long contentCategoryId){
+		try {
+			List<TbContent> list = contentService.getContentList(contentCategoryId);
+			return TaotaoResult.ok(list);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return TaotaoResult
+					.build(500, ExceptionUtil.getStackTrace(e));  //出错状态码,错误消息 
+		}
+	}
+	
+```
+
+Z:在方法中将查询到的list包装进TaotaoResult中进行返回，而build()是自定义状态码还有状态信息进行返回。
+
 M:for里面的数据应该是给属性赋值吧，但是在前端是怎么使用这些属性的呢？
 
 ```java
