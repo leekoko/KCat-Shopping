@@ -2,7 +2,216 @@
 
 M:安装redis需要什么前提条件？
 
-Z:先安装gcc，安装命令：``yum install gcc c++``    
+Z:先安装gcc，安装命令：``yum install gcc c++``    ，安装redis。
+
+M:怎么安装redis到服务器？
+
+Z:直接redis源码拖拽到linux上，右键解压（界面操作），命令行进入解压后的目录，``make``执行编译，``make install PREFIX=/usr/local/redis``指定安装的目录进行安装。
+
+M:为什么我安装提示文件夹创建失败？
+
+Z:那是你没有是用user账号进行安装吧。
+
+M:安装好之后怎么启动redis呢？
+
+Z:进入安装的目录``/usr/local/redis/bin``,进入之后可以使用两种启动模式：
+
+ 1.  前端启动
+
+     直接``/redis-server``,端口是6379      
+
+ 2.  后端启动
+
+     先复制源码包的``redis.conf``配置文件到redis的安装目录``cp redis.conf /usr/local/redis/bin/``
+
+     修改配置文件
+
+     ``daemonize yes``改成 yes  
+
+     指定配置文件启动redis``./redis-server redis.conf``   
+
+M:启动之后没什么反应，怎么知道有没有启动呢？
+
+Z:查看redis进程``ps aux|grep redis``  
+
+M:那我要执行redis命令呢？
+
+Z:指定cli进入redis命令模式``./redis-cli``   
+
+​	常用命令：``ping`` ， ``set a 10``  , ``get a``  , 增1``incr a``, 减1``decr a``,  删除a ``del a``  ,列出所有 ``keys *``   
+
+​	常用数据类型：``String``, ``Hash`` , ``List``, ``Set``, ``SortedSet``    
+
+M:单机版的redis搭建好了，那集群的redis要怎么搭建呢？
+
+Z:我来演示下怎么搭建6个redis实例集群，首先规定一下端口号：7001 ~ 7006  
+
+1. 进入``usr/local``目录，创建redis-cluster目录``mkdir redis-cluster``   
+
+2. 复制redis/bin文件到/redis-cluster下，改为redis01  ``cp -r bin ../redis-cluster/redis01``   
+
+3. 删除dump.rdb``rm -f dump.rdb``  ,rdb就是将内存的状态直接保存的快照文件
+
+4. 复制多个redis0n文件，n从1~6``cp -r redis01/ redis06``   
+
+5. 复制之后修改每个redis0n里的redis.conf文件``vim redis.conf ``   
+
+   修改对应端口号
+
+   ```
+   port 7001
+   ```
+
+   如果配置yes则开启集群功能
+
+   ```
+   cluster-enabled yes
+   ```
+
+6. 复制创建集群的ruby脚本redis-trib.rb（在redis源码的src文件夹下）到redis-cluster文件夹下``cp *.rb /usr/local/redis-cluster/``   
+
+7. 启动实例：创建脚本startall.sh``vim startall.sh``，对6个redis一并进行启动
+
+   ```
+   cd redis01
+   ./redis-server redis.conf
+   cd ..
+   cd redis02
+   ./redis-server redis.conf
+   cd ..
+   cd redis03
+   ./redis-server redis.conf
+   cd ..
+   cd redis04
+   ./redis-server redis.conf
+   cd ..
+   cd redis05
+   ./redis-server redis.conf
+   cd ..
+   cd redis06
+   ./redis-server redis.conf
+   cd ..
+   ```
+
+   文件添加执行权利``chmod +x startall.sh``，+x前面可以指定u 代表用户. g 代表用户组. o 代表其他. a 代表所有. 。 没有添加则默认为a
+
+   执行脚本``./startall.sh``,查看进程即可验证是否执行成功。 
+
+8. 执行创建集群命令：对创建集群的ruby脚本告诉它ip
+
+   ```
+   ./redis-trib.rb create --replicas 1 192.168.0.105:7001 192.168.0.105:7002 192.168.0.105:7003 192.168.0.105:7004 192.168.0.105:7005 192.168.0.105:7006
+   ```
+
+M:但是为什么linux执行脚本要添加``./``不可呢？
+
+Z:执行unix或linux中除了path系统变量外的目录下的命令都要加``./``。
+
+M:为什么ruby语言用不了？
+
+Z:要使用ruby脚本，就得安装ruby的环境。     
+
+```
+yum install ruby
+yum install rubygems
+```
+
+还需要redis和ruby的接口，gem命令安装redis-3.0.0.gem
+
+```
+gem install /home/ftpuser/Desktop/redis-3.0.0.gem
+```
+
+M:为什么我刚刚连接不上服务了？
+
+Z:首先你要看看ip地址是不是变了，而且如果你重启过服务器，redis进程是需要重开的。
+
+M:那我集群搭建好了，要怎么做测试呢？
+
+Z:连接任意一个结点，运行测试代码``set a 100``
+
+```
+redis01/redis-cli -h 192.168.0.105 -p 7002 -c
+```
+
+M:为什么进去redis01，连的确实7002的结点
+
+Z:它redis01用的是他的redis-cli客户端，连接结点随便哪一个都可以。
+
+M:那我redis想关闭的时候怎么办呢？
+
+Z:如果没有正常关闭redis，存在内存的数据可能会丢失，关闭命令``bin/redis-cli -p 7001 shutdown``,这里我把它写成一个脚本
+
+```
+redis01/redis-cli -p 7001 shutdown
+redis02/redis-cli -p 7002 shutdown
+redis03/redis-cli -p 7003 shutdown
+redis04/redis-cli -p 7004 shutdown
+redis05/redis-cli -p 7005 shutdown
+redis06/redis-cli -p 7006 shutdown
+```
+
+M:那redis在java中怎么使用呢？
+
+Z:用jedis，jedis是集成了redis的一些命令操作，封装了redis的java客户端。提供了连接池管理。
+
+使用案例：
+
+1. pom中引入jar包   
+
+   ```xml
+   			<dependency>
+   				<groupId>redis.clients</groupId>
+   				<artifactId>jedis</artifactId>
+   				<version>2.7.2</version>
+   			</dependency>
+   ```
+
+2. 编写测试代码
+
+   ```java
+   	@Test
+   	public void testJedisPool(){
+   		//创建jedis连接池
+   		JedisPool pool = new JedisPool("192.168.0.105",6379);
+   		//从连接池获取jedis对象
+   		Jedis jedis = pool.getResource();
+   		jedis.set("key2", "hello jedis hehe");
+   		String string = jedis.get("key1");
+   		System.out.println(string);
+   		//关闭jedis对象
+   		jedis.close();
+   		pool.close();
+   	}
+   ```
+
+   可以对redis的数据库写入读取键值对。
+
+M:为什么我执行的时候获取不到jedis对象呢？
+
+Z:linux服务器的防火墙是否关闭了呢，CentOS6防火墙的相关操作
+
+```
+关闭 /开启/重启防火墙
+service iptables stop 
+service iptables start 
+service iptables restart  
+永久关闭防火墙
+/sbin/service iptables stop
+chkconfig iptables off
+```
+
+
+
+   
+
+
+
+
+
+
+
+
 
 
 
