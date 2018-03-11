@@ -1,8 +1,14 @@
 package com.taotao.rest.jedis;
 
-import org.junit.Test;
+import java.util.HashSet;
 
+import org.junit.Test;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisPool;
 
 public class JedisTest {
@@ -19,5 +25,51 @@ public class JedisTest {
 		jedis.close();
 		pool.close();
 	}
-
+	
+	@Test
+	public void testJedisCluster(){
+		HashSet<HostAndPort> nodes = new HashSet<>();
+		nodes.add(new HostAndPort("192.168.0.105", 7001));
+		nodes.add(new HostAndPort("192.168.0.105", 7002));
+		nodes.add(new HostAndPort("192.168.0.105", 7003));
+		nodes.add(new HostAndPort("192.168.0.105", 7004));
+		nodes.add(new HostAndPort("192.168.0.105", 7005));
+		nodes.add(new HostAndPort("192.168.0.105", 7006));
+		
+		JedisCluster cluster = new JedisCluster(nodes);
+		
+		cluster.set("key3", "888");
+		String string = cluster.get("key3");
+		System.out.println(string);
+		
+		cluster.close();
+	}
+	/**
+	 * spring & redis
+	 * 测试单redis
+	 */
+	@Test
+	public void testSingle(){
+		ApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:spring/applicationContext-*.xml");
+		JedisPool pool = (JedisPool) applicationContext.getBean("redisClient");
+		Jedis jedis = pool.getResource();
+		String str = jedis.get("key1");
+		System.out.println(str);
+		jedis.close();
+		pool.close();
+	}
+	
+	/**
+	 * spring & redis
+	 * 集群测试redis
+	 */
+	@Test
+	public void testCluster(){
+		ApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:spring/applicationContext-*.xml");
+		JedisCluster jedisCluster = (JedisCluster) applicationContext.getBean("redisClient");
+		String str = jedisCluster.get("key1");
+		System.out.println(str);
+		jedisCluster.close();
+	}
+	
 }
