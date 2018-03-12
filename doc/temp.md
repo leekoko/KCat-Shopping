@@ -189,7 +189,7 @@ Z:用jedis，jedis是集成了redis的一些命令操作，封装了redis的java
 
 M:为什么我执行的时候获取不到jedis对象呢？
 
-Z:linux服务器的防火墙是否关闭了呢，CentOS6防火墙的相关操作
+Z:可能是linux防火墙的问题，CentOS6防火墙相关命令：
 
 ```
 关闭 /开启/重启防火墙
@@ -200,6 +200,108 @@ service iptables restart
 /sbin/service iptables stop
 chkconfig iptables off
 ```
+
+M:单机版的jedis知道怎么操作，那集群的呢？
+
+Z:添加所有的结点，添加数据到数组就可以，连redis都自动分配。
+
+```java
+	@Test
+	public void testJedisCluster(){
+		HashSet<HostAndPort> nodes = new HashSet<>();
+		nodes.add(new HostAndPort("192.168.0.105", 7001));
+		nodes.add(new HostAndPort("192.168.0.105", 7002));
+		nodes.add(new HostAndPort("192.168.0.105", 7003));
+		nodes.add(new HostAndPort("192.168.0.105", 7004));
+		nodes.add(new HostAndPort("192.168.0.105", 7005));
+		nodes.add(new HostAndPort("192.168.0.105", 7006));
+		JedisCluster cluster = new JedisCluster(nodes);
+		cluster.set("key3", "888");
+		String string = cluster.get("key3");
+		System.out.println(string);
+		cluster.close();
+	}
+```
+
+M:那我实际使用中怎么调用jedis呢，难道每一次都要配置host和port？
+
+Z:当然不是这样，因为jedis被多次调用到，所以我们这里可以使用spring容器对redis进行管理，然后通过注解的方式提供jedis对象。
+
+简单来说就是将host和port的配置写在spring配置文件ApplicationContext-jedis.xml中
+
+【单机版】
+
+```xml
+	<!-- jedis客户端单机版 -->
+	<bean id="redisClient" class="redis.clients.jedis.JedisPool">
+		<constructor-arg name="host" value="192.168.0.107"></constructor-arg>
+		<constructor-arg name="port" value="6379"></constructor-arg>
+	</bean>
+```
+
+【集群版】
+
+```xml
+	<bean id="redisClient" class="redis.clients.jedis.JedisCluster">
+		<constructor-arg name="nodes">
+			<set>
+				<bean class="redis.clients.jedis.HostAndPort.HostAndPort">
+					<constructor-arg name="host" value="192.168.0.107"></constructor-arg>
+					<constructor-arg name="port" value="7001"></constructor-arg>
+				</bean>
+				<bean class="redis.clients.jedis.HostAndPort.HostAndPort">
+					<constructor-arg name="host" value="192.168.0.107"></constructor-arg>
+					<constructor-arg name="port" value="7002"></constructor-arg>
+				</bean>
+...
+			</set>		
+		</constructor-arg>
+	</bean>
+```
+
+M:这个配置的id、class是什么意思呢？
+
+Z:id是被实例化的bean，而class是要被Spring实例化的类。
+
+M:那我要怎么测试配置是否成功呢？
+
+Z:单个redis测试
+
+```java
+	@Test
+	public void testSingle(){
+		ApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:spring/applicationContext-*.xml");
+		JedisPool pool = (JedisPool) applicationContext.getBean("redisClient");
+		Jedis jedis = pool.getResource();
+		String str = jedis.get("key1");
+		System.out.println(str);
+		jedis.close();
+		pool.close();
+	}
+```
+
+通过Spring实例化JedisPool，获取redis的内容
+
+M:那为什么我测试集群版的会失败呢？
+
+```java
+	/**
+	 * spring & redis
+	 * 集群测试redis
+	 */
+	@Test
+	public void testCluster(){
+		ApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:spring/applicationContext-*.xml");
+		JedisCluster jedisCluster = (JedisCluster) applicationContext.getBean("redisClient");
+		String str = jedisCluster.get("key1");
+		System.out.println(str);
+		jedisCluster.close();
+	}
+```
+
+Z:这个之后再做研究loading...
+
+视频10
 
 
 
@@ -260,4 +362,4 @@ chkconfig iptables off
 链接: https://pan.baidu.com/s/1R2X07fCYTh30zRxl2npJxg 
 
  密码: 2nnq
-这个是服务器的教程
+这个是服务器的教程。
