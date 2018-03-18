@@ -299,57 +299,73 @@ M:那为什么我测试集群版的会失败呢？
 	}
 ```
 
-Z:这个之后再做研究loading...
+Z:可能还是网卡的问题，如果你查询网卡发现ip地址是空的，可以修改CentOS的网络配置文件
 
-视频10
+1. ``vim /etc/sysconfig/network-scripts/ifcfg-eth0``编辑网络配置    
 
+2. 修改BOOTPROTO的值“dhcp”为“none”，表示静态ip
 
+   ``BOOTPROTO="none"``
 
-   
+3. 添加ip配置  
 
+   ```xml
+   IPADDR=192.168.1.1      --ip地址
+   NETMASK=255.255.255.0  --子网掩码
+   GATEWAY=192.168.0.1   --设置网关 必须和IP地址同一网段
+   ```
 
+4. 重启网络   ``/etc/init.d/network reload``   
 
+M:但是我这样配了之后还是不行啊！
 
+Z:
 
+1. 缓存删了没有
 
+```
+cd redis01
+rm dump.rdb
+rm nodes.conf
 
+cd ..
+cd redis02
+rm dump.rdb
+rm nodes.conf
+...
+```
 
+2. 因为修改了ip，所以需要重新执行创建集群命令：对创建集群的ruby脚本告诉它ip。
 
+这样子做之后，他就能通过spring访问到redis数据了。    
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+M:下一节学习视频10
 
 
 
-安装redis，先安装gcc，但是由于我的系统不能连接，所以暂时不操作
 
 
 
-03视频4min
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

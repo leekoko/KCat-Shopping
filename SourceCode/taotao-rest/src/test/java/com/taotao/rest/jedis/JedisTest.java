@@ -29,12 +29,12 @@ public class JedisTest {
 	@Test
 	public void testJedisCluster(){
 		HashSet<HostAndPort> nodes = new HashSet<>();
-		nodes.add(new HostAndPort("192.168.0.105", 7001));
-		nodes.add(new HostAndPort("192.168.0.105", 7002));
-		nodes.add(new HostAndPort("192.168.0.105", 7003));
-		nodes.add(new HostAndPort("192.168.0.105", 7004));
-		nodes.add(new HostAndPort("192.168.0.105", 7005));
-		nodes.add(new HostAndPort("192.168.0.105", 7006));
+		nodes.add(new HostAndPort("192.168.0.129", 7001));
+		nodes.add(new HostAndPort("192.168.0.129", 7002));
+		nodes.add(new HostAndPort("192.168.0.129", 7003));
+		nodes.add(new HostAndPort("192.168.0.129", 7004));
+		nodes.add(new HostAndPort("192.168.0.129", 7005));
+		nodes.add(new HostAndPort("192.168.0.129", 7006));
 		
 		JedisCluster cluster = new JedisCluster(nodes);
 		
@@ -67,7 +67,7 @@ public class JedisTest {
 	public void testCluster(){
 		ApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:spring/applicationContext-*.xml");
 		JedisCluster jedisCluster = (JedisCluster) applicationContext.getBean("redisClient");
-		String str = jedisCluster.get("key1");
+		String str = jedisCluster.get("key3");
 		System.out.println(str);
 		jedisCluster.close();
 	}
