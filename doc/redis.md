@@ -18,7 +18,7 @@ Z:进入安装的目录``/usr/local/redis/bin``,进入之后可以使用两种�
 
  1.  前端启动
 
-     直接``/redis-server``,端口是6379      
+     直接``./redis-server``,端口是6379      
 
  2.  后端启动
 
@@ -341,59 +341,223 @@ rm nodes.conf
 
 M:开发的时候用单机版，而实际使用的时候用集群版，但是两者之间代码有区别，怎么同时适配两种情况呢？
 
-Z:
+Z:那就得利用配置文件进行控制了。首先将两种情况都列出来，使用接口的方式来规范类的实现。
 
-各种借口的配置，还没使用起来
+```java
+public interface JedisClient {
+	
+	String get(String key);
+	String set(String key, String value);
+	String hget(String hkey, String key);
+	long hset(String hkey, String key, String value);
+	long incr(String key);
+	long expire(String key, int second);
+	long ttl(String key);
+	
+}
+```
 
+```java
+//不添加注解，手动在配置文件配
+public class JedisClientCluster implements JedisClient {
+	
+	@Autowired
+	private JedisCluster jedisCluster;
+	
+	@Override
+	public String get(String key) {
+		return jedisCluster.get(key);
+	}
+    ...
+```
 
+```java
+//不添加注解，在配置文件配
+public class JedisClientSingle implements JedisClient {
+	
+	@Autowired
+	private JedisPool jedisPool;
+	
+	@Override
+	public String get(String key) {
+		Jedis jedis = jedisPool.getResource();
+		String str = jedis.get(key);
+		jedis.close();
+		return str;
+	}
 
+	@Override
+	public String set(String key, String value) {
+		Jedis jedis = jedisPool.getResource();
+		String str = jedis.set(key, value);
+		jedis.close();
+		return str;
+	}
+    ...
+```
 
+但是接口写了之后，可不能直接在类上面添加注解，因为要用哪个还不一定呢。所以注解要改用配置文件的方式，在 applicationContext-jedis.xml 配置文件中规定使用哪个类。
 
+```xml
+	<!-- 单机版 -->
+	<bean id="JedisClient" class="com.taotao.rest.dao.impl.JedisClientSingle"></bean>
+```
 
+```xml
+	<!-- 集群版 -->
+	<bean id="JedisClientCluster" class="com.taotao.rest.dao.impl.JedisClientCluster"></bean>
+```
 
+这个配置中，就可以指定对象进行注入。
 
+M:那怎么将对象进行注入呢？
 
+Z:使用``@Autowired``注解就可以了。
 
+```java
+	@Autowired
+	private JedisClient jedisClient;
+```
 
+M:那我已经有jedisClient对象了，要怎么使用redis缓存呢？
 
+Z:添加无影响的缓存提取存储操作。
 
-M:下一节学习视频11
+```java
+	@Value("${INDEX_CONTENT_REDIS_KEY}")
+	private String INDEX_CONTENT_REDIS_KEY;
+	
+	@Override
+	public List<TbContent> getContentList(long contentCid) {
+		
+		//从缓存中获取内容
+		try {
+			String result = jedisClient.hget(INDEX_CONTENT_REDIS_KEY, contentCid + "");
+			if(!StringUtils.isEmpty(result)){
+				List<TbContent> resultList = JsonUtils.jsonToList(result, TbContent.class);
+				return resultList;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		//根据内容分类id查询内容列表
+		TbContentExample example = new TbContentExample();
+		Criteria criteria = example.createCriteria();
+		criteria.andCategoryIdEqualTo(contentCid);
+		//执行查询
+		List<TbContent> list =contentMapper.selectByExample(example);
+		
+		//向缓存中添加内容
+		try {
+			//redis存字符串，把list转化为字符串
+			String cacheString = JsonUtils.objectToJson(list);
+			jedisClient.hset(INDEX_CONTENT_REDIS_KEY, contentCid + "", cacheString);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return list;
+	}
+```
 
+D:为什么叫做无影响？
 
+Z:因为添加try...catch...之后，就算redis报错，也不会导致程序停止运行。
 
+D:这个注解是获取配置文件的值的，但是它是怎么做到的呢？``@Value("${INDEX_CONTENT_REDIS_KEY}")``   
 
+Z:在``applicationContext-dao.xml``中可以配置加载配置文件
 
+```xml
+	<!-- 加载配置文件 -->
+	<context:property-placeholder location="classpath:resource/*.properties" />
+```
 
+这样他就会读取道resource下``resource.properties``的内容
 
+```xml
+#首页信息在redis中保存的key
+INDEX_CONTENT_REDIS_KEY=INDEX_CONTENT_REDIS_KEY 
+```
 
+M:但是为什么要在键值对的基础上，还添加这个值呢？
 
+```java
+String result = jedisClient.hget(INDEX_CONTENT_REDIS_KEY, contentCid + "");
+```
 
+Z:目前能想到的就是 分组 的功能，存入组名再存入编号，便于管理。
 
+M:那这句的作用是怎么实现的，将字符串转化为List``List<TbContent> resultList = JsonUtils.jsonToList(result, TbContent.class);``  
 
+Z:因为数据在存储的时候，就是通过List转化成字符串，这只不过是一个逆过程而已，至于怎么实现的：
 
+```java 
+    /**
+     * 将json数据转换成pojo对象list
+     * <p>Title: jsonToList</p>
+     * <p>Description: </p>
+     * @param jsonData
+     * @param beanType
+     * @return
+     */
+    public static <T>List<T> jsonToList(String jsonData, Class<T> beanType) {
+    	JavaType javaType = MAPPER.getTypeFactory().constructParametricType(List.class, beanType);
+    	try {
+    		List<T> list = MAPPER.readValue(jsonData, javaType);
+    		return list;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+    	
+    	return null;
+    }
+```
 
+主要还是根据原本对象，使用jackson将数据在 对象 和 字符串 两种形态中相互转化。
 
+M:为什么在hset存入redis的时候，要将List转化为String呢？
 
+Z:因为redis的存储方式String字符串，所以需要对存储的数据进行处理。
 
+M:但是现在有个问题，如果我数据修改了呢，redis还是存储旧的数据怎么办？
 
+Z:那就把旧的redis删除，让它重新加载就可以了,在rest工程的Controller添加：
 
+```java
+	@RequestMapping("/content/{contentCid}")
+	@ResponseBody
+	public TaotaoResult contentCacheSync(@PathVariable Long contentCid){
+		TaotaoResult result = redisService.syncContent(contentCid);
+		return result;
+	}
+```
 
+M:为什么之前的redis缓存添加是在Service层，而现在的删除却在Controller层。
 
+Z:主要是使用的情况不同，rest工程是一个对前端数据进行交互的工程。所以做查询的时候，在Service就可以对数据进行缓存操作。
 
+而涉及到存储的话，是通过manager工程（cms管理系统）将数据存入数据库中，所以它只能将删除缓存的操作放在Controller，供其他工程使用doGet调用。
 
+M:其他工程是怎么通过doGet调用该Controller方法的呢？
 
+Z:用HttpClientUtil工具类，直接将指定的redis信息删除掉。
 
+```java
+	@Override
+	public TaotaoResult insertContent(TbContent content) {
+		//补全pojo
+		content.setCreated(new Date());
+		content.setUpdated(new Date());
+		contentMapper.insert(content);
+		
+		//添加缓存同步逻辑
+		try{
+			HttpClientUtil.doGet(REST_BASE_URL + REST_CONTENT_SYNC_URL + content.getCategoryId());
+		}catch(Exception e){
+			e.printStackTrace();
+		}
 
-
-
-
-【经理】四川-余忠华(462029019)  23:04:35
-链接: https://pan.baidu.com/s/1Ot0DKZpaqjebQmVoJTypuw 
-
- 密码: mg4w
-6.8版本的centos
-【经理】四川-余忠华(462029019)  23:06:49
-链接: https://pan.baidu.com/s/1R2X07fCYTh30zRxl2npJxg 
-
- 密码: 2nnq
-这个是服务器的教程。
+		return TaotaoResult.ok();
+	}
+```
