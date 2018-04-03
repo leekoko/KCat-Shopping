@@ -54,9 +54,27 @@ M:除了war包，还需要别的什么吗？
 Z:还有 jar包  &  配置文件
 
 1. 把``solr-4.10.3/example/lib/ext``下的jar包复制到webapps的``/webapps/solr-4.10.3/WEB-INF/lib``中。
-2. 把``solr-4.10.3/example/solr``下的solr拷贝到``/usr/local/solr/solrhome``与tomcat同级的目录下。
+2. 把``solr-4.10.3/example/``下的solr拷贝到``/usr/local/solr/solrhome``与tomcat同级的目录下:``cp -r solr /usr/local/solr``(文件夹需要添加-r)
 
+M:但是solr工程怎么知道自己的配置文件在哪里呢？
 
+Z:所以需要修改solr工程的web.xml文件，配置JNDI，指向配置文件的目录
+
+```xml
+    <env-entry>
+       <env-entry-name>solr/home</env-entry-name>
+       <env-entry-value>/usr/local/solr/solrhome</env-entry-value>
+       <env-entry-type>java.lang.String</env-entry-type>
+    </env-entry>
+```
+
+M:完成之后怎么测试呢？
+
+Z:启动tomcat，然后进行访问8080/solr看看有没有solr页面，有则搭建成功了。
+
+M:但是为什么我现在显示当前机子无法访问目标主机呢？
+
+loading
 
 
 
