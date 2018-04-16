@@ -1,22 +1,28 @@
 # solr
 
-M:安装solr服务器需要配置什么环境呢？
+M:solr是干嘛用的呢？
 
-Z:jdk、tomcat  。
+D:Solr是一个独立的企业级搜应用服务器，它对外提供类似于Web-service的API接口。用户可以通过http请求，向搜索引擎服务器提交一定格式的XML文件，生成索引；也可以通过Http Get操作提出查找请求，并得到XML格式的返回结果。solr将非结构化数据，通过分词、词法分析、过滤停词、语义分析等手段来转成结构化数据，存储为索引。
 
-M:那jdk怎么安装配置呢？
+Z：就是说，solr是一种全网搜索，但是其还支持语义相同的关键词。（例如：搜索solr，却可以查询出来lucene内容）  
+
+M:那安装solr服务器需要配置什么环境呢？
+
+Z:jdk、tomcat  、IK Analyzer。
+
+M:jdk怎么安装配置呢？
 
 Z:1. 首先下载jdk安装包``jdk-7u55-linux-i586.tar.gz``。
 
 2. 然后解压到指定的文件夹下``tar -zxvf jdk-7u55-linux-i586.tar.gz -C /usr/lib/jvm``
 
-3. 配置环境变量``vim /etc/profile``   
+3. 配置环境变量``vim /etc/sysconfig/network-scripts/ifcfg-eth0``   
 
    ```properties
    export JAVA_HOME=/usr/lib/jvm/jdk1.7.0_55
    export JRE_HOME=${JAVA_HOME}/jre
    export CLASSPATH=.:${JAVA_HOME}/lib:${JRE_HOME}/lib
-   export  PATH=${JAVA_HOME}/bin:$PATH
+   export PATH=${JAVA_HOME}/bin:$PATH
    ```
 
 4. 执行profile``source /etc/profile``即可检查jdk``java -version``是否安装成功了。   
@@ -54,6 +60,7 @@ M:除了war包，还需要别的什么吗？
 Z:还有 jar包  &  配置文件
 
 1. 把``solr-4.10.3/example/lib/ext``下的jar包复制到webapps的``/webapps/solr-4.10.3/WEB-INF/lib``中。
+2. 拷贝log4j.properties文件，在Tomcat下webapps\solr\WEB-INF目录中创建文件 classes文件夹，复制Solr目录下``example\resources\log4j.properties``至Tomcat下``webapps\solr\WEB-INF\classes``目录。 
 2. 把``solr-4.10.3/example/``下的solr拷贝到``/usr/local/solr/solrhome``与tomcat同级的目录下:``cp -r solr /usr/local/solr``(文件夹需要添加-r)
 
 M:但是solr工程怎么知道自己的配置文件在哪里呢？
@@ -74,7 +81,37 @@ Z:启动tomcat，然后进行访问8080/solr看看有没有solr页面，有则�
 
 M:但是为什么我现在显示当前机子无法访问目标主机呢？
 
+Z:你可以尝试使用Nat自动获取ip的方式，如果这样可以ping得通的话，就可以启动后进行访问了（记得修改解压文件夹名为solr）。
+
+M:IK Analyzer是做什么用的呢？
+
+Z:中文分词器 ``IK Analyzer `` 。例如输入 ``基于java语言开发的轻量级的中文分词工具包``,可以自动切割为``基于|java|语言|开发|的|轻量级|的|中文|分词|工具包|``。    
+
 loading
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
