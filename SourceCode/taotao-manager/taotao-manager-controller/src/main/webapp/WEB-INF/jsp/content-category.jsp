@@ -33,7 +33,6 @@ $(function(){
             				target : node.target,
             				id : data.data.id
             			});
-        				alert("A:"+data.data.id);
         			}else{
         				$.messager.alert('提示','创建'+node.text+' 分类失败!');
         			}
