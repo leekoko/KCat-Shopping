@@ -1,21 +1,34 @@
 # 前后端分离      
 
-本文主要介绍前台和后台分离的方式，各自搭建一个工程，可以减低耦合度，灵活地进行分布式部署。而由于是不同的工程，服务之间通过接口通信，开发工作量提高。    
+本文主要介绍前台和后台分离的方式，将服务层抽取出来，各自搭建一个工程，可以减低耦合度，灵活地进行分布式部署。而由于是不同的工程，服务之间通过接口通信，开发工作量提高。   
+
+![](../img/p28.png)  
+
+M:怎么灵活地分布式部署？
+
+Z:例如服务层被访问的压力比较大，就可以多部署几台服务器,处理高并发问题。
 
 这里使用两个项目来搭建前台，分别是服务层 & 表现层。   
 
 ## 1.创建后端工程(服务层)   
 
-使用到的技术：Mybatis, Spring, SpringMVC
+D:创建服务层taotao-rest
 
-- 创建war工程
-- 继承于parent工程
+M:服务层会用到哪些技术呢？
+
+Z:使用到的技术：
+
+​	Mybatis连接数据库,
+
+​	Spring,
+
+​	SpringMVC发布服务
 
 ### 1.pom添加依赖   
 
-直接依赖整个模块，把相关的jar包都继承过来。
+D：直接依赖mapper整个模块，把相关的jar包都继承过来。
 
-1. dao层：
+1. 继承mapper
 
 ```xml
   <dependencies>
@@ -27,7 +40,13 @@
   </dependencies>
 ```
 
-2. service层：依赖Spring    
+M:这样依赖有什么好处？
+
+Z:除了mapper自身，它上层的pojo，common由于都要用到，它们的jar包都被依赖过来。
+
+M:这样的话，mapper就相当于service模块的位置。模块化的好处估计就在这里，直接在中间就可以依赖过来。
+
+D：用到spring的东西，依赖过来    
 
 ```xml
   		<!-- Spring -->
@@ -58,7 +77,7 @@
 	</dependency>
 ```
 
-3. controller层   
+D:controller层，虽然不用表现层，当时servlet的东西可能会用到，加进来   
 
 ```xml
 	<dependency>
@@ -77,63 +96,136 @@
 
 ### 2.添加web.xml    
 
-使用之前的web.xml修改springmvc拦截路径：只要是改路径下的都会被springmvc拦截    
+D:war包下需要有一个web.xml,创建了才不会报错。
 
 ```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	id="kcat" version="2.5">
+	<display-name>kcat-rest</display-name>
+	<!-- 加载spring容器 -->
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>classpath:spring/applicationContext-*.xml</param-value>
+	</context-param>
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+	<!-- 解决post乱码 -->
+	<filter>
+		<filter-name>CharacterEncodingFilter</filter-name>
+		<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+		<init-param>
+			<param-name>encoding</param-name>
+			<param-value>utf-8</param-value>
+		</init-param>
+	</filter>
+	<!-- springmvc的前端控制器 -->
+	<servlet>
+		<servlet-name>kcat-rest</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<!-- contextConfigLocation不是必须的， 如果不配置contextConfigLocation， springmvc的配置文件默认在：WEB-INF/servlet的name+"-servlet.xml" -->
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>classpath:spring/springmvc.xml</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
 	<servlet-mapping>
-		<servlet-name>taotao-manager</servlet-name>
+		<servlet-name>kcat-rest</servlet-name>
 		<url-pattern>/rest/*</url-pattern>
 	</servlet-mapping>
+</web-app>
 ```
+
+M:spring容器用到，解决乱码也需要，发布服务用到前端控制器，而扫描器指定 /rest/* 路径下的访问被拦截。
 
 ### 3.框架整合
 
-添加resources 。
+M：什么是框架整合？
 
-1. 在applicationContext中因为dao层使用同一个，所以还是扫描：``com.taotao.mapper`` 。
+Z：就是将其他框架弄在一起
 
-2. service扫描的是  ``com.taotao.rest.service`` 。      
+例如添加resources ：
 
-3. 事务需要指向新的包：
+![](../img/p19.png)  
 
-   ```xml
-   	<!-- 切面 -->
-   	<aop:config>
-   		<aop:advisor advice-ref="txAdvice"
-   			pointcut="execution(* com.taotao.rest.service.*.*(..))" />
-   	</aop:config>
-   ```
+db.properties用来连接数据库，无需修改
 
-4. springmvc扫描的包重新指向：
+resource.properties资源文件配置无需用到，可清空
 
-   ```xml
-   	<context:component-scan base-package="com.taotao.rest.controller" />
-   ```
+applicationContext-dao.xml,也是扫描cn.taotao.mapper下的文件，无需修改
 
-![](../img/p19.png)   
+```xml
+	<!-- 配置扫描包，加载mapper代理对象 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="cn.kcat.mapper"></property>
+	</bean>
+```
+
+applicationContext-service.xml，扫描的包需要进行修改（包新建后才不会报错）
+
+```xml
+	<!-- 扫描包加载Service实现类 -->
+	<context:component-scan base-package="cn.kcat.rest.service"></context:component-scan>
+```
+
+applicationContext-trans.xml 修改事务的切面
+
+```xml
+	<!-- 切面 -->
+	<aop:config>
+		<aop:advisor advice-ref="txAdvice"
+			pointcut="execution(* cn.kcat.rest.service.*.*(..))" />
+	</aop:config>
+```
+
+springmvc.xml修改扫描,资源映射不需要配，因为拦截只对单个/有效，对/rest/*无效
+
+```xml
+	<context:component-scan base-package="cn.kcat.rest.controller" />
+	<mvc:annotation-driven />
+```
 
 ### 4.配置tomcat
+
+D:启动需要配置tomcat 
 
 1. 使用不同的端口号：8081    
 
 ### 5.静态资源的位置
 
+M：静态资源放在哪里呢？
+
+Z：webapp下，WEB-INF同层
+
 ![](../img/p21.png) 
 
-为了静态资源  
+M：为什么css之类的静态资源要放在外面而不放在WEB-INF里面？
+
+Z：因为放在WEB-INF里面的html是直接访问不了的，就是为了安全着想。而静态资源放在里面就会访问不了，就需要配映射，一旦配了映射。WEB-INF就是去了原来的安全性。
 
 ## 2.创建前端工程(表现层)
 
-使用到的技术：Spring, SpringMVC, jstl, jQuery, httpClient    
+D:继承于parent工程，所有工程的母工程
 
-客户端和服务端之间没有直接依赖关系，完全独立。
+M:为什么要继承parent？
 
-- 创建war工程
-- 继承于parent工程
+Z:parent定义了所有jar包的版本号，我们所有新建的子工程都要继承于parent工程
+
+M:门户系统需要到哪些技术？
+
+Z:Spring , SpringMVC , JSTL ，HttpClient等，由于不用连接数据库，而是通过调用服务的方式，所以不需要Mybatis    
+
+Z:表现层和服务端之间没有直接依赖关系，完全独立，所以不需要依赖哪个工程。（不是继承）
 
 ### 1.pom添加依赖
 
-1. service层：依赖taotao-common，Spring  ，前端jar包  
+Z：虽然不需要依赖其他项目，但是还是需要spring的，把spring相关的拷进来
+
+因为是前端JSP相关的也要依赖进来
 
 ```xml
   		<!-- Spring -->
@@ -182,21 +274,55 @@
 	</dependency>
 ```
 
-把common和所需的jar包依赖过来。
+Z:依赖taotao-common
+
+```xml
+	<dependency>
+		<groupId>cn.kemao666</groupId>
+		<artifactId>kemao-common</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</dependency>
+```
+
+M:为什么要依赖taotao-common项目
+
+Z:因为用到HttpClient工具，而common项目里面的工具我们很多都会用到，所以相当于把工具类依赖过来。
 
 ### 2.添加web.xml
 
-修改前端控制器&过滤拦截：html伪静态化
+M:spring容器需要添加
 
 ```xml
-	<servlet-mapping>
-		<servlet-name>taotao-portal</servlet-name>
-		<url-pattern>*.html</url-pattern>
-	</servlet-mapping>
-...
+	<!-- 加载spring容器 -->
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>classpath:spring/applicationContext-*.xml</param-value>
+	</context-param>
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+```
+
+乱码处理前端需要到
+
+```xml
+	<!-- 解决post乱码 -->
+	<filter>
+		<filter-name>CharacterEncodingFilter</filter-name>
+		<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+		<init-param>
+			<param-name>encoding</param-name>
+			<param-value>utf-8</param-value>
+		</init-param>
+	</filter>
+```
+
+服务请求需要到前端控制器
+
+```xml
 	<!-- springmvc的前端控制器 -->
 	<servlet>
-		<servlet-name>taotao-portal</servlet-name>
+		<servlet-name>kcat-portal</servlet-name>
 		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
 		<!-- contextConfigLocation不是必须的， 如果不配置contextConfigLocation， springmvc的配置文件默认在：WEB-INF/servlet的name+"-servlet.xml" -->
 		<init-param>
@@ -207,42 +333,62 @@
 	</servlet>
 ```
 
-### 3.框架整合
-
-添加resources 。
-
-1. 不需要访问dao，不添加applicationContext-dao。
-
-2. 修改applicationContext-service的配置文件
-
-   ```xml
-   	<!-- 加载配置文件 -->
-   	<context:property-placeholder location="classpath:resource/*.properties" />
-   	<!-- 扫描包加载Service实现类 -->
-   	<context:component-scan base-package="com.taotao.portal.service"></context:component-scan>
-   ```
-
-3. 不需要事务，不添加trans。
-
-4. springmvc扫描的包重新指向：资源上传和文件映射不需要
+拦截*.html的内容，实现伪静态化
 
 ```xml
-...
-	<context:component-scan base-package="com.taotao.portal.controller" />
-	<mvc:annotation-driven />
+	<servlet-mapping>
+		<servlet-name>kcat-portal</servlet-name>
+		<!-- 伪静态化 -->
+		<url-pattern>*.html</url-pattern>
+	</servlet-mapping>
+```
+
+### 3.框架整合
+
+Z:applicationContext-dao.xml，除了加载配置文件有用，其他用不到，整合到service中。service还要指定扫描包
+
+```xml
+	<!-- 加载配置文件 -->
+	<context:property-placeholder location="classpath:resource/*.properties" />
+	
+	<!-- 扫描包加载Service实现类 -->
+	<context:component-scan base-package="cn.kcat.portal.service"></context:component-scan>
+```
+
+事务不需要到，删除
+
+springmvc.xml需要扫描包和视图解析器，资源映射只用于单个/ , 这里就不用了
+
+```xml
+	<context:component-scan base-package="cn.kcat.portal.controller" />
+	<mvc:annotation-driven />  <!-- 注解驱动 -->
 	<bean
 		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
 		<property name="prefix" value="/WEB-INF/jsp/" />
 		<property name="suffix" value=".jsp" />
 	</bean>
-...
 ```
+
+文件位置如下：
 
 ![](../img/p20.png)   
 
-### 4.配置tomcat
 
-1. 使用不同的端口号，HTTP , AJP ，才能进行启动。   
+
+Z：既然做了*.html拦截，为什么直接tomcat本地地址就可以访问
+
+M：因为web.xml里面配置了访问首页index.html
+
+
+
+
+
+
+
+
+
+
+
 
 
 ### 5.跨域问题   
