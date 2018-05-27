@@ -89,7 +89,7 @@ Z:中文分词器 ``IK Analyzer `` 。例如输入 ``基于java语言开发的�
 
 M:``IK Analyzer `` 	怎么安装呢？
 
-Z: 5min
+Z: 
 
 
 
