@@ -1,4 +1,4 @@
-# solr
+# solr的简单使用
 
 M:solr是干嘛用的呢？
 
@@ -83,15 +83,82 @@ M:但是为什么我现在显示当前机子无法访问目标主机呢？
 
 Z:你可以尝试使用Nat自动获取ip的方式，如果这样可以ping得通的话，就可以启动后进行访问了（记得修改解压文件夹名为solr）。
 
-M:IK Analyzer是做什么用的呢？
+M：安装完solr之后要怎么使用呢？
 
-Z:中文分词器 ``IK Analyzer `` 。例如输入 ``基于java语言开发的轻量级的中文分词工具包``,可以自动切割为``基于|java|语言|开发|的|轻量级|的|中文|分词|工具包|``。    
+Z：需要先配置中文分析器，再配置业务字段。
 
-M:``IK Analyzer `` 	怎么安装呢？
+M：什么是中文分析器？
 
-Z: 
+Z：中文分词器 IK Analyzer 。例如输入 ``基于java语言开发的轻量级的中文分词工具包``,可以自动切割为``基于|java|语言|开发|的|轻量级|的|中文|分词|工具包|``。    
 
+M：IK Analyzer怎么安装呢？
 
+Z：安装IK Analyzer步骤如下
+
+1. 需要把IK Analyzer 的jar包``IKAnalyzer2012FF_u1.jar`` 添加到solr工程的lib文件夹下。   
+
+2. 拷贝IK Analyzer 的配置文件``IKAnalyzer.cfg.xml``,相关字典``ext_stopword.dic,mydict.dic``到WEB-INF的classes文件夹下，如果没有该文件夹，新建一个。   
+
+3. 配置文件配置fieldType，位置在``/solrhome/collection1/conf/schema.xml``   
+
+   ```xml
+   <fieldType name="text_ik" class="solr.TextField">
+     <analyzer class="org.wltea.analyzer.lucene.IKAnalyzer"/>
+   </fieldType>
+   ```
+
+M：那业务字段要怎么配置呢？
+
+Z：首先要确定配置哪些字段。
+
+M：那要怎么判断这字段需不需要配置呢？
+
+Z：判断标准   1.搜索时是否需要该字段	2.后序业务用到不
+
+需要用到字段如下
+
+```
+商品id
+商品title
+卖点
+价格
+商品图片
+商品分类名称
+商品描述
+```
+
+M：添加在哪里呢？
+
+Z：之前的``schema.xml``文件中
+
+```xml
+<field name="item_title" type="text_ik" indexed="true" stored="true"/>
+<field name="item_sell_point" type="text_ik" indexed="true" stored="true"/>
+<field name="item_price"  type="long" indexed="true" stored="true"/>
+<field name="item_image" type="string" indexed="false" stored="true" />
+<field name="item_category_name" type="string" indexed="true" stored="true" />
+<field name="item_desc" type="text_ik" indexed="true" stored="false" />
+
+<field name="item_keywords" type="text_ik" indexed="true" stored="false" multiValued="true"/>
+<copyField source="item_title" dest="item_keywords"/>
+<copyField source="item_sell_point" dest="item_keywords"/>
+<copyField source="item_category_name" dest="item_keywords"/>
+<copyField source="item_desc" dest="item_keywords"/>
+```
+
+M：name对应的是id，stored是什么意思？
+
+Z：stored为true的时候表示存储，存储不存储根据是否搜索该信息决定，desc描述只用于展示，所以不需要存储。   
+
+M：下面的``copyField``是什么，有什么作用？
+
+Z：复制域，是一种优化方式。把其他域复制到一块域上，更便于搜索。
+
+M：那怎么测试业务字段是否配置成功呢？
+
+Z：选择colletion1，如果FieldType下拉框中有添加的业务字段，并且对中文成功分割，则说明IK Analyzer中文分析器已配置成功。   
+
+![](../img/p29.png)      
 
 
 
