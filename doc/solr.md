@@ -158,7 +158,290 @@ M：那怎么测试业务字段是否配置成功呢？
 
 Z：选择colletion1，如果FieldType下拉框中有添加的业务字段，并且对中文成功分割，则说明IK Analyzer中文分析器已配置成功。   
 
-![](../img/p29.png)      
+![](../img/p29.png)   
+
+M：怎么进行索引库的添加、删除、修改 ？
+
+Z：solr命令
+
+   	1. 删除 ：``<delete><id>001</id></delete>`` ,``<delete><query>*:*</query></delete>``  删除之后需要进行提交 ``<commit/>`` 
+   	2. 查询：``<query>*:*</query>``       
+
+
+M：为什么没有修改呢？
+
+Z：修改就是重新添加一次，只要id一样，内容就会被更新。
+
+M：那要怎么将数据存进索引库中呢？不会是一条一条写进去吧。
+
+Z：可以通过写java代码实现数据的导入。
+
+M：那用到什么东西呢？
+
+Z：需要用到solrJ客户端，所以要在maven工程中添加依赖。(parent统一管理中能找到)
+
+```xml
+	<!-- solr客户端 -->
+	<dependency>
+		<groupId>org.apache.solr</groupId>
+		<artifactId>solr-solrj</artifactId>
+	</dependency>
+```
+
+M：solrJ怎么做数据导入呢？
+
+Z：使用solrServer对象提交solr文档对象
+
+```java
+	@Test
+	public void addDocument() throws SolrServerException, IOException {
+		//创建连接
+		SolrServer solrServer = new HttpSolrServer("http://192.168.175.129:8080/solr");
+		//创建文档对象
+		SolrInputDocument document = new SolrInputDocument();
+		document.addField("id", "test001");
+		document.addField("item_title", "测试商品1");
+		document.addField("item_price", 12345);
+		//文档对象写入索引库
+		solrServer.add(document);
+		//提交
+		solrServer.commit();
+	}
+```
+
+M：那要怎么知道自己的索引是否导入成功呢？
+
+Z：只要打开solr界面进行查询就可以了。
+
+M：那删除的方法呢？
+
+Z：删除有多种操作方式，可以通过id，id List，甚至query语句
+
+```java
+	@Test
+	public void deleteDocument() throws SolrServerException, IOException{
+		//创建连接
+		SolrServer solrServer = new HttpSolrServer("http://192.168.175.129:8080/solr");
+//		solrServer.deleteById("001");   //通过id删除
+		solrServer.deleteByQuery("*:*");  //通过语句删除
+		solrServer.commit();  
+	}
+```
+
+M：大量的数据信息导入，要怎么做数据库跟索引库的对接呢？
+
+Z：就是一个从数据库取出来，存到索引库的过程
+
+```java
+	@Override
+	public TaotaoResult importAllItems(){
+		try {
+			//查询商品列表
+			List<Item> list = itemMapper.getItemList();
+			//商品信息写入索引库
+			for (Item item:list) {
+				//创建文档对象
+				SolrInputDocument document = new SolrInputDocument();
+				document.addField("id", item.getId());
+				document.addField("item_title", item.getTitle());
+				document.addField("item_sell_point", item.getSell_point());
+				document.addField("item_price", item.getPrice());
+				document.addField("item_image", item.getImage());
+				document.addField("item_category_name", item.getCategory_name());
+				document.addField("item_desc", item.getItem_des());
+//			//创建连接
+//			SolrServer solrServer = new HttpSolrServer("http://192.168.175.129:8080/solr");
+				solrServer.add(document);
+			}
+			solrServer.commit();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return TaotaoResult.build(500, ExceptionUtil.getStackTrace(e));
+		}
+		return TaotaoResult.ok();
+	}
+```
+
+- pojo对象
+
+  ```java
+  	private String id;
+  	private String title;
+  	private String sell_point;
+  	private long price;
+  	private String image;
+  	private String category_name;
+  	private String item_des;
+  ```
+
+- mapper层
+
+  ```java
+  public interface ItemMapper {
+  	List<Item> getItemList();
+  }
+  ```
+
+  ```xml
+  <?xml version="1.0" encoding="UTF-8"?>
+  <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+  <mapper namespace="com.taotao.search.mapper.ItemMapper" >
+  	<select id="getItemList" resultType="com.taotao.search.pojo.Item">
+  		SELECT
+  			a.id,
+  			a.title,
+  			a.sell_point,
+  			a.price,
+  			a.image,
+  			b. NAME category_name
+  		FROM
+  			tb_item a
+  		LEFT JOIN tb_item_cat b ON a.cid = b.id
+  	</select>
+  </mapper>
+  ```
+
+M：``SolrServer``对象不new，那怎么获取到呢？
+
+Z：通过Spring容器注入进来，需要在spring配置文件中新增-solr的配置文件，注入方式如下：
+
+```xml
+	<!-- 单机版 -->
+	<bean id="httpSolrServer" class="org.apache.solr.client.solrj.impl.HttpSolrServer">
+		<constructor-arg name="baseURL" value="${SOLR.SERVER.URL}"></constructor-arg>
+	</bean>
+```
+
+``${变量}``可以从指定的配置文件中获取对应值
+
+M：这个注入的xml是怎么配置的呢？
+
+Z：其实就是调用某个类的构造方法，传值进去。
+
+因为是`` new HttpSolrServer``,所以指定``org.apache.solr.client.solrj.impl.HttpSolrServer``类。然后该类的构造方法有一个``baseURL``的属性，我们将其赋值为``${SOLR.SERVER.URL}``
+
+```java
+  public HttpSolrServer(String baseURL) {
+    this(baseURL, null, new BinaryResponseParser());
+  }
+```
+
+M：为什么solr要单独做一个服务呢？
+
+Z：因为solr搜索可能有高负载的问题，单独分离出来便于分布式部署。
+
+M：rest（商品数据获取工程）有redis，solr需要redis吗？
+
+Z：不需要，因为solr里面自带有缓存。
+
+M：需要依赖什么项目，怎么确定呢？
+
+Z：因为不需要对数据进行维护，只是导入而已，所以不需要依赖mapper工程。但是可能会用到common工程的工具，所以依赖common工程。
+
+```xml
+  <dependencies>
+  	<dependency>
+		<groupId>com.taotao</groupId>
+		<artifactId>taotao-common</artifactId>
+		<version>0.0.1-SNAPSHOT</version>		
+  	</dependency>
+  </dependencies>
+```
+
+需要依赖的jar包
+
+1. spring：到处用到
+
+2. springmvc：发布服务
+
+3. solrj：操作solr
+
+4. mybatis：查询语句。为了方便，可以修改直接依赖``taotao-manager-mapper``工程，它本身就已经依赖了common工程
+
+   ```xml
+     <dependencies>
+     	<dependency>
+   		<groupId>com.taotao</groupId>
+   		<artifactId>taotao-manager-mapper</artifactId>
+   		<version>0.0.1-SNAPSHOT</version>		
+     	</dependency>
+     </dependencies>
+   ```
+
+用到mapper需要配置资源扫描
+
+```xml
+	<!-- 如果不添加此节点mybatis的mapper.xml文件都会被漏掉。 -->
+	<build>
+		<resources>
+	           <resource>
+	               <directory>src/main/java</directory>
+	               <includes>
+	                   <include>**/*.properties</include>
+	                   <include>**/*.xml</include>
+	               </includes>
+	               <filtering>false</filtering>
+	           </resource>
+            
+               <resource>
+	               <directory>src/main/resources</directory>
+	               <includes>
+	                   <include>**/*.properties</include>
+	                   <include>**/*.xml</include>
+	               </includes>
+	               <filtering>false</filtering>
+	           </resource>
+            
+	       </resources>
+	</build>
+```
+
+M：为什么要添加两个资源扫描？
+
+D：比如mybatis的mapper.xml文件，我们习惯把它和Mapper.java放一起，都在src/main/java下面，这样利用maven打包时，就需要修改pom.xml文件，来把mapper.xml文件一起打包进jar或者war里了，否则，这些文件不会被打包的。（maven认为src/main/java只是java的源代码路径）
+
+Z：当只配置``src/main/java``的时候，默认的``src/main/resources``就会获取不到，所以需要同时配置``src/main/resources``。   
+
+M：除了依赖，还需要什么配置文件呢？
+
+Z：配置文件大致如下
+
+1. webapp下的``WEB-INF/web.xml``     
+
+2. mybatis配置文件
+
+3. spring控制dao的配置文件，添加扫描包
+
+   ```xml
+   	<!-- 配置扫描包，加载mapper代理对象 -->
+   	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+   		<property name="basePackage" value="com.taotao.mapper,com.taotao.search.mapper"></property>
+   	</bean>
+   ```
+
+4. spring控制service的文件，修改扫描包
+
+5. springmvc.xml，也就是spring控制controller的文件，修改扫描包
+
+M：为什么不需要spring的trans事务配置文件？
+
+Z：只有在对数据库维护的时候才需要事务，这里只是单方面查询。
+
+M：整合后的目录结构如下：
+
+![](../img/p30.png)  
+
+M：怎么导入成功呢？
+
+Z：运行对应Controller，返回200即成功导入
+
+
+
+
+
+
+
+​      
 
 
 
