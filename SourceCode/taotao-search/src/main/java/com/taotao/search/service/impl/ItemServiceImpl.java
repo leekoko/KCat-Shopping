@@ -1,4 +1,4 @@
-package com.taotao.search.service;
+package com.taotao.search.service.impl;
 
 import java.util.List;
 
@@ -11,6 +11,7 @@ import com.taotao.common.pojo.TaotaoResult;
 import com.taotao.common.utils.ExceptionUtil;
 import com.taotao.search.mapper.ItemMapper;
 import com.taotao.search.pojo.Item;
+import com.taotao.search.service.ItemService;
 @Service
 public class ItemServiceImpl implements ItemService{
 	

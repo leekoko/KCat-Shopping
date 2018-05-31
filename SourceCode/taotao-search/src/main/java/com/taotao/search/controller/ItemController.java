@@ -18,7 +18,7 @@ public class ItemController {
 	/**
 	 * 导入所有数据到索引库
 	 */
-	@RequestMapping("importall")
+	@RequestMapping("/importall")
 	@ResponseBody
 	public TaotaoResult importAllItems(){
 		TaotaoResult result = itemService.importAllItems();

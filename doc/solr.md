@@ -435,13 +435,69 @@ M：怎么导入成功呢？
 
 Z：运行对应Controller，返回200即成功导入
 
+M：为什么页面访问一直404报错？
+
+Z：地址存在问题。
+
+确定地址的三元素，地址 = tomcat的server.xml + 项目的web.xml + Controller的RequestMapping地址   
+
+tomcat的server.xml
+
+```xml
+      <Context docBase="taotao-search" path="/" reloadable="true" source="org.eclipse.jst.jee.server:taotao-search"/></Host>
+
+```
+
+web.xml
+
+```xml
+	<servlet-mapping>
+		<servlet-name>taotao-search</servlet-name>
+		<url-pattern>/search/*</url-pattern>
+	</servlet-mapping>
+```
+
+最终地址示例如：``http://localhost:8084/search/manager/importall``   
 
 
 
 
 
 
-​      
+
+
+
+
+
+M：用java代码我要怎么将数据提取出来呢？
+
+Z：可以使用solrServer的方法，进行部分提取
+
+```java
+	@Test
+	public void queryDocument() throws Exception {
+		SolrServer solrServer = new HttpSolrServer("http://192.168.175.129:8080/solr");
+		//创建一个查询对象
+		SolrQuery query = new SolrQuery();
+		//设置查询条件
+		query.setQuery("*:*");
+		query.setStart(0);   //开始页
+		query.setRows(6);    //显示行数
+		//执行查询
+		QueryResponse response = solrServer.query(query);
+		//取查询结果
+		SolrDocumentList solrDocumentList = response.getResults();  //获取对象列表
+		System.out.println("共查询到记录：" + solrDocumentList.getNumFound());
+		for (SolrDocument solrDocument : solrDocumentList) {
+			System.out.println(solrDocument.get("id"));   //获取指定属性
+			System.out.println(solrDocument.get("item_title"));
+			System.out.println(solrDocument.get("item_price"));
+			System.out.println(solrDocument.get("item_image"));
+		}
+	}
+```
+
+
 
 
 
