@@ -459,16 +459,6 @@ web.xml
 
 最终地址示例如：``http://localhost:8084/search/manager/importall``   
 
-
-
-
-
-
-
-
-
-
-
 M：用java代码我要怎么将数据提取出来呢？
 
 Z：可以使用solrServer的方法，进行部分提取
@@ -497,59 +487,218 @@ Z：可以使用solrServer的方法，进行部分提取
 	}
 ```
 
+M：那在代码中，要怎么使用呢？
+
+Z：编写dao层，取出SolrQuery对象，并对其进行高亮，封装成Item处理。
+
+```java
+	public SearchResult search(SolrQuery query) throws SolrServerException {
+		
+		//返回值对象
+		SearchResult result = new SearchResult();
+		//根据查询条件查询索引库
+		QueryResponse queryResponse = solrServer.query(query);
+		//取查询结果
+		SolrDocumentList solrDocumentList = queryResponse.getResults();
+		//取查询结果总数量
+		result.setRecordCount(solrDocumentList.getNumFound());
+		//商品列表
+		List<Item> itemList = new ArrayList<>();
+		//取高亮显示
+		Map<String, Map<String, List<String>>> highlighting = queryResponse.getHighlighting();
+		//取商品列表
+		for (SolrDocument solrDocument : solrDocumentList) {
+			//创建一商品对象
+			Item item = new Item();
+			item.setId((String) solrDocument.get("id"));
+			//取高亮显示的结果
+			List<String> list = highlighting.get(solrDocument.get("id")).get("item_title");
+			String title = "";
+			if (list != null && list.size()>0) {
+				title = list.get(0);
+			} else {
+				title = (String) solrDocument.get("item_title");
+			}
+			item.setTitle(title);
+			item.setImage((String) solrDocument.get("item_image"));
+			item.setPrice((long) solrDocument.get("item_price"));
+			item.setSell_point((String) solrDocument.get("item_sell_point"));
+			item.setCategory_name((String) solrDocument.get("item_category_name"));
+			//添加的商品列表
+			itemList.add(item);
+		}
+		result.setItemList(itemList);
+		return result;
+	}
+```
+
+M：这个取高亮是怎么回事？
+
+Z：solr在查询之后会返回一些高亮的标记数据，这里就是将高亮的数据拿出来，存进title里。
+
+```java
+			//取高亮显示的结果
+			List<String> list = highlighting.get(solrDocument.get("id")).get("item_title");
+			String title = "";
+			if (list != null && list.size()>0) {
+				title = list.get(0);
+			} else {
+				title = (String) solrDocument.get("item_title");
+			}
+```
+
+效果如：``"title":"金国威（SanCup）D600荣耀 老人<em style=\"color:red\">手机</em>移动/联通2G<em style=\"color:red\">手写手机</em> 双卡双待 褐咖啡"``   
+
+M：``SearchResult``是怎么来的呢？
+
+Z：用来存储相关的属性信息而定义的
+
+```java
+public class SearchResult {
+	//商品列表
+	private List<Item> itemList;
+	//总记录数
+	private long recordCount;
+	//总页数
+	private long pageCount;
+	//当前页
+	private long curPage;
+    ...
+```
+
+Z：在Service处理业务逻辑，指定起始页、高亮等
+
+```java
+	public SearchResult search(String queryString, int page, int rows) throws Exception {
+		
+		//创建查询对象
+		SolrQuery query = new SolrQuery();
+		//设置查询条件
+		query.setQuery(queryString);
+		//设置分页
+		query.setStart((page - 1) * rows);
+		query.setRows(rows);
+		//设置默认搜素域
+		query.set("df", "item_keywords");
+		//设置高亮显示
+		query.setHighlight(true);
+		query.addHighlightField("item_title");
+		query.setHighlightSimplePre("<em style=\"color:red\">");
+		query.setHighlightSimplePost("</em>");
+		//执行查询
+		SearchResult searchResult = searchDao.search(query);
+		//计算查询结果总页数
+		long recordCount = searchResult.getRecordCount();
+		long pageCount = recordCount / rows;
+		if (recordCount % rows > 0) {
+			pageCount++;
+		}
+		searchResult.setPageCount(pageCount);
+		searchResult.setCurPage(page);
+		
+		return searchResult;
+	}
+```
+
+M：为什么要设置高亮显示呢？
+
+Z：高亮显示的样式标签是可以由用户自己定义的。
+
+M：那前端拿到searchResult，要怎么使用呢？
+
+Z：筛选值为必填，开始页与行设默认值
+
+```java
+	@RequestMapping(value="/query", method=RequestMethod.GET)
+	@ResponseBody
+	public TaotaoResult search(@RequestParam("q")String queryString, 
+			@RequestParam(defaultValue="1")Integer page, 
+			@RequestParam(defaultValue="60")Integer rows) {
+		//查询条件不能为空
+		if (StringUtils.isBlank(queryString)) {
+			return TaotaoResult.build(400, "查询条件不能为空");
+		}
+		SearchResult searchResult = null;
+		try {
+			searchResult = searchService.search(queryString, page, rows);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return TaotaoResult.build(500, ExceptionUtil.getStackTrace(e));
+		}
+		return TaotaoResult.ok(searchResult);
+	}
+```
+
+将查询的结果封装为TaotaoResult的Object属性中进行返回。
+
+M：执行的时候报扫不到dao怎么办？
+
+Z：介绍一下一种新的扫描方式
+
+```xml
+	 <context:component-scan base-package="com.taotao.search">
+	 	<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+	 </context:component-scan>
+```
+
+与之前不同的是，它并非指定哪个包进行扫描。而是指定一堆包进行扫描，然后筛选排除表达式为Controller的注解。
+
+M：通过访问``http://localhost:8084/search/query?q=%E6%89%8B%E6%9C%BA&page=2&rows=10``，获取到了数据。但是听说get请求可能会产生乱码，怎么办呢？
+
+Z：解决get乱码方法``new String(ptype.getBytes("iso8859-1"),"utf-8");``      
+
+D：我觉得上边的文章有点不详细，需要进行改进。缩小知识点到最小单位，再进行研究。
+
+M：那怎么将search服务用到项目中呢？
+
+Z：使用portal工程调用search工程进行搜索，将返回的json数据（TaotaoResult包SearchResult包List< Item> ）转化为java对象，传到前端进行渲染。   
+
+M：搜索框的前端触发怎么做？
+
+Z：编写 鼠标离开事件 和 回车事件``(event.keyCode==13)``  
+
+```html
+				<div class="form">
+					<input type="text" class="text" accesskey="s" id="key" autocomplete="off" onkeydown="javascript:if(event.keyCode==13) search('key');">
+					<input type="button" value="搜索" class="button" onclick="search('key');return false;" clstag="homepage|keycount|home2013|03a">
+				</div>
+```
+
+js方法对服务进行调用
+
+```js
+function search(a) {
+    var b = "http://localhost:80824/search.html?q=" + encodeURIComponent(document.getElementById(a).value);
+    return window.location.href = b;
+}
+```
+
+M：``encodeURIComponent() ``方法是干嘛用的？
+
+Z：``encodeURIComponent()`` 函数可把字符串作为 URI 组件进行编码。
+
+效果如下：
+
+```java
+<script type="text/javascript">
+document.write("测试一："+encodeURIComponent("你好，世界！")+ "<br />")
+document.write("测试二："+encodeURIComponent("Hello world!")+ "<br />")
+document.write("测试三："+encodeURIComponent(",/?:@&=+$#"))
+</script>
+输出结果：
+测试一：%E4%BD%A0%E5%A5%BD%EF%BC%8C%E4%B8%96%E7%95%8C%EF%BC%81
+测试二：Hello%20world!
+测试三：%2C%2F%3F%3A%40%26%3D%2B%24%23
+```
+
+M：``"http://localhost:80824/search.html?q="``中*.html和q跟之前的测试不一样，能拿到数据么？
+
+Z：
+
+M：那查询之后返回的结果怎么显示？
+
+Z：返回的为``search.jsp``页面，在页面标签之间进行回显。   
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-   
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+新写代码进行解析，结束之后分析全文整写。

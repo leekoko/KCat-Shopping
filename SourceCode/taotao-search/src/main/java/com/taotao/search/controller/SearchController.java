@@ -36,7 +36,6 @@ public class SearchController {
 			return TaotaoResult.build(500, ExceptionUtil.getStackTrace(e));
 		}
 		return TaotaoResult.ok(searchResult);
-		
 	}
 	
 }
