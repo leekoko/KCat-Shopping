@@ -487,7 +487,7 @@ Z：可以使用solrServer的方法，进行部分提取
 	}
 ```
 
-M：那在代码中，要怎么使用呢？
+M：数据已经知道怎么提取，那在代码中，要怎么使用呢？
 
 Z：编写dao层，取出SolrQuery对象，并对其进行高亮，封装成Item处理。
 
@@ -649,7 +649,7 @@ Z：解决get乱码方法``new String(ptype.getBytes("iso8859-1"),"utf-8");``
 
 D：我觉得上边的文章有点不详细，需要进行改进。缩小知识点到最小单位，再进行研究。
 
-M：那怎么将search服务用到项目中呢？
+M：工程接口已经实现好了，那怎么调用search服务用到前台项目中呢？
 
 Z：使用portal工程调用search工程进行搜索，将返回的json数据（TaotaoResult包SearchResult包List< Item> ）转化为java对象，传到前端进行渲染。   
 
@@ -664,14 +664,68 @@ Z：编写 鼠标离开事件 和 回车事件``(event.keyCode==13)``
 				</div>
 ```
 
-js方法对服务进行调用
+js方法对服务进行调用:(需要加html，因为web.xml对*.html后缀进行扫描)
 
 ```js
 function search(a) {
-    var b = "http://localhost:80824/search.html?q=" + encodeURIComponent(document.getElementById(a).value);
+    var b = "http://localhost:8082/search.html?q=" + encodeURIComponent(document.getElementById(a).value);
     return window.location.href = b;
 }
 ```
+
+调用的对象是本项目的Controller:
+
+```java
+	@RequestMapping("/search")
+	public String search(@RequestParam("q")String queryString,@RequestParam(defaultValue="1")Integer page, Model model){
+/*		if(queryString != null){
+			try {
+				queryString = new String(queryString.getBytes("iso8859-1"),"utf-8");
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}*/
+		
+		SearchResult searchResult = searchService.search(queryString, page);
+		//向页面传递参数
+		model.addAttribute("query", queryString);
+		model.addAttribute("totalPages", searchResult.getPageCount());
+		model.addAttribute("page", page);
+         model.addAttribute("itemList", searchResult.getItemList());
+		
+		return "search";    //返回逻辑视图
+	}
+```
+
+Service层：
+
+```java
+	@Override
+	public SearchResult search(String queryString, int page) {
+		//调用taotao-search服务
+		//查询参数
+		Map<String, String> param = new HashMap<String,String>();
+		param.put("q", queryString);
+		param.put("page", page + "");
+		try {
+			//调用服务
+			String json = HttpClientUtil.doGet(SEARCH_BASE_URL,param);
+			//字符串转化为java对象
+			TaotaoResult taotaoResult = TaotaoResult.formatToPojo(json, SearchResult.class);
+			if(taotaoResult.getStatus() == 200){
+				SearchResult result = (SearchResult) taotaoResult.getData();
+				return result;
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+
+		return null;
+	}
+```
+
+这个Service不对数据库直接进行操作，而是用HttpClientUtil调用接口来获取数据  
 
 M：``encodeURIComponent() ``方法是干嘛用的？
 
@@ -691,14 +745,34 @@ document.write("测试三："+encodeURIComponent(",/?:@&=+$#"))
 测试三：%2C%2F%3F%3A%40%26%3D%2B%24%23
 ```
 
-M：``"http://localhost:80824/search.html?q="``中*.html和q跟之前的测试不一样，能拿到数据么？
-
-Z：
-
 M：那查询之后返回的结果怎么显示？
 
 Z：返回的为``search.jsp``页面，在页面标签之间进行回显。   
 
+```html
+<c:forEach items="${itemList}" var="item">
+<li class="item-book" bookid="11078102">
+	<div class="p-img">
+		<a target="_blank" href="/item/${item.id }.html">
+			<img width="160" height="160" data-img="1" data-lazyload="${item.images[0]}" /> <!-- 修改成数组第一张图 -->
+		</a>
+	</div>
+	<div class="p-name">
+		<a target="_blank" href="/item/${item.id }.html">
+			${item.title}
+		</a>
+	</div>
+	<div class="p-price">
+		<i>淘淘价：</i>
+		<strong>￥<fmt:formatNumber groupingUsed="false" maxFractionDigits="2" minFractionDigits="2" value="${item.price / 100 }"/></strong>
+	</div>
+	<div class="service">由 淘淘 发货</div>
+	<div class="extra">
+		<span class="star"><span class="star-white"><span class="star-yellow h5">&nbsp;</span></span></span>
+	</div>
+</li>
+</c:forEach>
+```
 
+![../img/p31.png](..\img\p31.png)       
 
-新写代码进行解析，结束之后分析全文整写。

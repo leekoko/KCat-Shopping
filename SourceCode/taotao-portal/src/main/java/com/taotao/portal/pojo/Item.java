@@ -51,6 +51,18 @@ public class Item {
 	public void setItem_des(String item_des) {
 		this.item_des = item_des;
 	}
+	/**
+	 * 获取图片地址数组
+	 * @return
+	 */
+	public String[] getImages(){
+		if(image != null){
+			String[] images = image.split(",");
+			return images;
+		}
+		return null;
+	}
+	
 	@Override
 	public String toString() {
 		return "Item [id=" + id + ", title=" + title + ", sell_point=" + sell_point + ", price=" + price + ", image="
