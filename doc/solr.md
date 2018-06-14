@@ -774,5 +774,5 @@ Z：返回的为``search.jsp``页面，在页面标签之间进行回显。
 </c:forEach>
 ```
 
-![../img/p31.png](..\img\p31.png)       
+![../img/p31.png](../img/p31.png)       
 
