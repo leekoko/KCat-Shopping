@@ -776,3 +776,9 @@ Z：返回的为``search.jsp``页面，在页面标签之间进行回显。
 
 ![../img/p31.png](../img/p31.png)       
 
+M：我启动多个tomcat的总是端口冲突，怎么办？
+
+Z：可以利用进程查看，停止命令进行排查：
+
+cmd命令里输入：netstat -ano|findstr 8080  可以找到相应的8080进程数字串
+taskkill /pid  数字串 /f 可以杀死进程
