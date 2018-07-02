@@ -20,6 +20,26 @@
 
 2. 文件放置在视图解析器指定的文件夹下，也就是``/WEB-INF/jsp/``   
 
+D：maven工程下，怎么将指定位置的xml，properties文件读取到classes文件夹中？
+
+Z：在pom文件中添加resource路径代码，一般用在mapper模块中
+
+```xml
+	<!-- 如果不添加此节点mybatis的mapper.xml文件都会被漏掉。 -->
+	<build>
+		<resources>
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.properties</include>
+                    <include>**/*.xml</include>
+                </includes>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
+	</build>
+```
+
 ## 2.首页的跳转   
 
 1. 编写一个PageController，做页面跳转  

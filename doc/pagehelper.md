@@ -16,11 +16,11 @@ _在sql执行之前插一手，让其有别的附加功能。_
    ```
 
    ```xml
-   			<dependency>
-   				<groupId>com.github.pagehelper</groupId>
-   				<artifactId>pagehelper</artifactId>
-   				<version>${pagehelper.version}</version>
-   			</dependency>
+   <dependency>
+   	<groupId>com.github.pagehelper</groupId>
+   	<artifactId>pagehelper</artifactId>
+   	<version>${pagehelper.version}</version>
+   </dependency>
    ```
 
 _引入其jar包的过程。_  
@@ -69,6 +69,32 @@ _把拦截sql的权限交给了pagehelper，并且告诉它：你要拦截的sql
 	}
 ```
 
+D：那要怎么对搭建好的pagehelper插件进行测试呢？
+
+Z：使用以下测试案例
+
+```java
+//获取第1页，10条内容，默认查询总数count
+PageHelper.startPage(1, 10);
+List<Country> list = countryMapper.selectAll();
+//用PageInfo对结果进行包装
+PageInfo page = new PageInfo(list);
+//测试PageInfo全部属性
+//PageInfo包含了非常全面的分页属性
+assertEquals(1, page.getPageNum());
+assertEquals(10, page.getPageSize());
+assertEquals(1, page.getStartRow());
+assertEquals(10, page.getEndRow());
+assertEquals(183, page.getTotal());
+assertEquals(19, page.getPages());
+assertEquals(1, page.getFirstPage());
+assertEquals(8, page.getLastPage());
+assertEquals(true, page.isFirstPage());
+assertEquals(false, page.isLastPage());
+assertEquals(false, page.isHasPreviousPage());
+assertEquals(true, page.isHasNextPage());
+```
+
 1. 首先加载spring容器，spring容器里面有许多mapper映射类（由xxxMapper.xml转化而成），取出要使用的代理对象。
 
    ```java
@@ -111,6 +137,10 @@ _使用pagehelper就省去了原来编写新的sql语句，只需要告诉pagehe
 
 ### 2.创建EasyUI要用的pojo   
 
+D：已知插件所需的json格式为``{total:”2”,rows:[{“id”:”1”,”name”,”张三”},{“id”:”2”,”name”,”李四”}]}``，怎么将数据传到前台呢？
+
+Z：根据json的格式编写对应的POJO对象，例如EUDataDridResult
+
 因为别的项目可能用到EasyUI的pojo，所以写一个通用的在common工程里。
 
 ```java
@@ -138,6 +168,19 @@ public class EUDataDridResult {
 _使用pojo是为了把数据以特定的形式转化为json传给datagrid显示_
 
 _common工程是一个工具箱，你做什么项目，带着这个工具箱过去，用到什么工具就在里面拿。所以平时有一些常用的工具，我们就会放进这个工具箱里面。_  
+
+D：那前台是怎么解析对象进行显示的呢？
+
+Z：前台直接返回这个Pojo对象，使用``@ResponseBody``注解将对象转化为json数据进行显示。
+
+```java
+	@RequestMapping("/item/list")
+	@ResponseBody
+	public EUDataDridResult getItemList(Integer page,Integer rows){
+		EUDataDridResult result = itemService.getItemList(page, rows);
+		return result;
+	}
+```
 
 ### 3.在Service工程中获取信息   
 
@@ -173,6 +216,10 @@ Service层分两部分，接口部分还有实现接口部分，通过service层
 
    通过pagehelper取出对象之后，将其对象返回给Controller    
 
+D：为什么单单``PageHelper.startPage(page, rows);``这个限制就可以筛选出指定的数据？
+
+Z：当我们设置分页信息的时候，前面配置的pagehelper拦截器会对查询语句进行拦截。
+
 ### 4.Controller接收数据传到前台      
 
 ```java
@@ -187,6 +234,10 @@ Service层分两部分，接口部分还有实现接口部分，通过service层
 返回的虽然是pojo对象，但其会自动转化为json数据，需要添加@ResponseBody注解。    
 
 ### 5.前台页面显示    
+
+D：前端是怎么显示的呢？
+
+Z：直接将json传给插件
 
 ```html
 <table class="easyui-datagrid" id="itemList" title="商品列表" 

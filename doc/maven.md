@@ -9,6 +9,45 @@
 
 ## 2.新建maven工程   
 
+D：这个项目使用的是什么架构呢？
+
+Z：分布式架构。
+
+D：为什么要使用分布式架构，它有什么优点？
+
+Z：分布式的项目有利于团队的分工，大家一个团队负责一个子系统。也有利于项目的解耦，某个功能模块可以单独升级。便于增加功能，只需添加子项目，调用其他系统的接口即可。
+
+D：maven为什么要有子模块的概念，其跟项目之间的maven依赖又有什么区别呢？
+
+Z：这主要涉及有三个标签的使用``<modules>,<parent>,<dependency>``    
+
+D：``<modules>``标签的使用场景是？它有什么作用。
+
+Z：聚合工程，将几个模块的内容聚合成一个工程，便于统一操作。在读取主项目的pom文件时去找到modules的配置，还会分别去编译他们引入的依赖。
+
+D：``<parent>,<dependency>`` 两者的作用相似，他们之间又有什么区别呢？
+
+Z：他们之间的区别可能是一种继承和引用的关系。
+
+因为parent项目中的pom文件管理了所有项目的jar包版本，所以它被其他的项目继承``<parent>`` 。
+
+而common项目的工具包，它的工具只有部门用户会用到，作为父工程继承不合适，所以更好地是引用它``<dependency>``。      
+
+D：那本项目中，maven之间的继承引用是怎么实现的呢？
+
+Z：
+
+1.  parent工程：管理了所有的jar包版本 ，被所有的工程所继承 ``<parent>`` 。
+2.  common工程：放了工具类的jar包
+3.  manager工程：引用了common的工具包``<dependency>``，并且定义了底下的四个模块``<module>``   
+4.  manager-pojo模块：通过继承manager工程``<parent>``，进而继承了parent工程，jar包
+5.  manager-mapper模块：继承manager工程``<parent>``，并引用了pojo模块``<module>``，jar包。    
+6.  manager-service模块：继承manager工程``<parent>``，并引用了mapper模块``<module>``，jar包。    
+7.  manager-web模块：继承manager工程``<parent>``，并引用了service模块``<module>``，war包。  
+8.  portal工程：是一个前端工程，引用了common工具类和pojo模块进行提取数据包装显示。
+9.  rest工程：是一个负责显示api接口工程，引用了mapper模块进行对数据库的操作。
+10.  search工程：是一个负责查询的api接口工程，引用了mapper模块进行对数据库的操作。
+
 ### 1.跳过模板的选择   
 
 打勾  Create a simple project
@@ -427,4 +466,4 @@ clean tomcat7:run
 
 ### 3.异常  
 
-当启动多个tomcat就会报：``Failed to execute goal org.apache.maven.plugins:maven-clean-plugin:2.5``异常，这时候只要关闭所有的tomcat就可以了  
+当启动多个tomcat就会报：``Failed to execute goal org.apache.maven.plugins:maven-clean-plugin:2.5``异常，这时候只要关闭所有的tomcat就可以了。  
