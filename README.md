@@ -25,5 +25,7 @@
 
 ### 12.[redis](doc/redis.md)  
 
-### 13.[solr](doc/solr.md)    
+### 13.[solr](doc/solr.md)       
+
+### 14.[详情展示页面](doc/productDisplay.md)   
 
