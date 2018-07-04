@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import com.taotao.common.pojo.TaotaoResult;
 import com.taotao.common.utils.JsonUtils;
+import com.taotao.mapper.TbItemDescMapper;
 import com.taotao.mapper.TbItemMapper;
 import com.taotao.pojo.TbItem;
 import com.taotao.pojo.TbItemDesc;
@@ -23,6 +24,9 @@ public class ItemServiceImpl implements ItemService {
 	
 	@Autowired
 	private TbItemMapper itemMapper;
+	
+	@Autowired
+	private TbItemDescMapper itemDescMapper;
 	
 	@Value("${REDIS_ITEM_KEY}")
 	private String REDIS_ITEM_KEY;
@@ -64,11 +68,34 @@ public class ItemServiceImpl implements ItemService {
 		return TaotaoResult.ok(item);
 	}
 	
-	public TaotaoResult getItemDesc(long itemId){
+	public TaotaoResult getItemDescInfo(long itemId){
+		
+		try {
+			//添加缓存逻辑
+			String json = jedisClient.get(REDIS_ITEM_KEY + ":" + itemId + ":desc");
+			//从缓存取信息，根据id提取
+			if(!StringUtils.isBlank(json)){
+				//json转pojo
+				TbItemDesc itemDesc = JsonUtils.jsonToPojo(json, TbItemDesc.class);
+				return TaotaoResult.ok(itemDesc);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
 		//创建查询条件
-		TbItemDesc selectByPrimaryKey = itemDescMa.selectByPrimaryKey(itemId);
+		TbItemDesc itemDesc = itemDescMapper.selectByPrimaryKey(itemId);
+		try {
+			//把商品信息写入缓存
+			jedisClient.set(REDIS_ITEM_KEY + ":" + itemId + ":desc", JsonUtils.objectToJson(itemDesc));
+			//设置key的有效期
+			jedisClient.expire(REDIS_ITEM_KEY + ":" + itemId + ":desc", REDIS_ITEM_EXPIRE);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		
-		
+		return TaotaoResult.ok(itemDesc); 
 	}
 
 }
