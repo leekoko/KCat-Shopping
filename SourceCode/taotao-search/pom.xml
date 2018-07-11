@@ -38,11 +38,11 @@
 		<artifactId>spring-aspects</artifactId>
 	</dependency>  	
 	
-	<dependency>
+<!-- 	<dependency>
 	    <groupId>javax.servlet</groupId>
 	    <artifactId>javax.servlet-api</artifactId>
 	    <scope>provided</scope>
-	</dependency>
+	</dependency> -->
 	<dependency>
 		<groupId>javax.servlet</groupId>
 		<artifactId>jsp-api</artifactId>
