@@ -286,7 +286,7 @@ _我叫视图解析器，是一位指路人。一个数据部落和我签下契�
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>taotao-manager</servlet-name>
-		<url-pattern>/</url-pattern>
+		<url-pattern>/</url-pattern> <!--拦截所有请求，不能用/* -->
 	</servlet-mapping>
 </web-app>
 ```
