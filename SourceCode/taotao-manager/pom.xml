@@ -12,9 +12,9 @@
 <!-- 依赖管理 -->
   <dependencies>
   	<dependency>
-  		<groupId>com.taotao</groupId>
-  		<artifactId>taotao-common</artifactId>
-  		<version>0.0.1-SNAPSHOT</version>
+  		<groupId>com.taotao.common</groupId>
+		<artifactId>taotao-common</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
   	</dependency>
   </dependencies>
   

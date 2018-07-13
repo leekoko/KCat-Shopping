@@ -55,11 +55,19 @@
 		<artifactId>solr-solrj</artifactId>
 	</dependency>
   </dependencies>
-	 
+  <build>
 	<!-- 如果不添加此节点mybatis的mapper.xml文件都会被漏掉。 -->
-	<build>
 		<finalName>${project.artifactId}</finalName>
 		<plugins>
+		    <!-- tomcat插件 -->
+		  	<plugin>
+				<groupId>org.apache.tomcat.maven</groupId>
+				<artifactId>tomcat7-maven-plugin</artifactId>
+				<configuration>
+					<port>8083</port>
+					<path>/</path>
+				</configuration>
+		  	</plugin>
 			<!-- 资源文件拷贝插件 -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -111,5 +119,4 @@
 	        </resource>
 		</resources>
 	</build>
-	
 </project>
