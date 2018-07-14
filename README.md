@@ -27,5 +27,9 @@
 
 ### 13.[solr](doc/solr.md)       
 
-### 14.[详情展示页面](doc/productDisplay.md)   
+### 14.[详情展示页面](doc/productDisplay.md)     
+
+### 15[单点登录](doc/sso.md)   
+
+
 
