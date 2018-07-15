@@ -1,4 +1,4 @@
-package com.taotao.rest.dao.impl;
+package com.taotao.sso.dao.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -58,7 +58,7 @@ public class JedisClientCluster implements JedisClient {
 		return jedisCluster.del(key);
 	}
 
-	@Override			
+	@Override
 	public long hdel(String hkey, String key) {
 		// TODO Auto-generated method stub
 		return jedisCluster.hdel(hkey, key);

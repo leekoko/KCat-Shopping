@@ -1,4 +1,4 @@
-package com.taotao.rest.dao.impl;
+package com.taotao.sso.dao.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
