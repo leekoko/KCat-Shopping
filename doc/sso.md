@@ -10,7 +10,7 @@ Z：将session放在redis中，设置key的生存时间。
 
 ![](../img/p32.png)  
 
-D：这个系统需要有什么功能？
+M：这个系统需要有什么功能？
 
 Z：它要实现以下几个接口   
 
@@ -82,6 +82,20 @@ Service：通过manager-mapper项目对数据库进行访问
 ```
 
 提供的接口为:``http://localhost:8084/user/check/11/4``   
+
+D：注册接口已经做好，但是没有前端页面，怎么对其进行测试？
+
+Z：使用post请求的工具RESTClient，模拟前端页面
+
+![](../img/p33.png)  
+
+表单的Content-Type为application/x-www-form-urlencoded，添加表单参数即可模拟POST请求。
+
+D：登陆需要做什么动作呢？
+
+Z：传用户名、密码到后台，加密之后与数据库进行比对，比对成功生成一个token，将token作为key、value作为用户信息存进redis中。
+
+
 
 
 
