@@ -31,27 +31,52 @@ Z：通过将用户注册信息传到数据库进行匹配，参数缺陷、已�
 Controller
 
 ```java
-	public TaotaoResult checkData(String content, Integer type) {
-		//创建查询条件
-		TbUserExample example = new TbUserExample();
-		Criteria criteria = example.createCriteria();
-		//数据进行校验  1、2、3分别代表username、phone、email
-		//用户名校验
-		if(1 == type){
-			criteria.andUsernameEqualTo(content);
-		}else if(2 == type){
-			criteria.andPhoneEqualTo(content);
+	@RequestMapping("/check/{param}/{type}")
+	@ResponseBody
+	public Object checkData(@PathVariable String param,@PathVariable Integer type, String callBack){
+		
+		TaotaoResult result = null;
+		
+		//参数有效性验证
+		if(StringUtils.isBlank(param)){
+			result = TaotaoResult.build(400, "校验内容不能为空");
+		}
+		if(type == null){
+			result = TaotaoResult.build(400, "校验内容类型不能为空");
+		}
+		if(type != 1 && type != 2 && type != 3){
+			result = TaotaoResult.build(400, "校验内容类型错误");
+		}
+		//校验出错
+		if(null != result){
+			if(null != callBack){
+				MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(result);
+				mappingJacksonValue.setJsonpFunction(callBack);
+				return mappingJacksonValue;
+			}else{
+				return result;
+			}
+		}
+		//调用服务
+		try {
+			result = userService.checkData(param, type);
+		} catch (Exception e) {
+			result = TaotaoResult.build(500, ExceptionUtil.getStackTrace(e));
+		}
+		//校验出错
+		if(null != callBack){
+			MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(result);
+			mappingJacksonValue.setJsonpFunction(callBack);
+			return mappingJacksonValue;
 		}else{
-			criteria.andEmailEqualTo(content);
+			return result;
 		}
-		//执行查询
-		List<TbUser> list = userMapper.selectByExample(example);
-		if(list == null || list.size() == 0){
-			return TaotaoResult.ok(true);
-		}
-		return TaotaoResult.ok(false);
 	}
 ```
+
+D：MappingJacksonValue有什么作用？
+
+Z：它是spring提供的包装方法，可以将对象包装为回调函数进行返回。callBack参数就是回调函数的参数名。
 
 Service：通过manager-mapper项目对数据库进行访问
 
@@ -95,15 +120,105 @@ D：登陆需要做什么动作呢？
 
 Z：传用户名、密码到后台，加密之后与数据库进行比对，比对成功生成一个token，将token作为key、value作为用户信息存进redis中。
 
+Controller
 
+```java
+	//用户登陆
+	@RequestMapping(value="/login",method=RequestMethod.POST)    //仅支持post，不添加都支持
+	@ResponseBody
+	public TaotaoResult userLogin(String username, String password){
+		try {
+			TaotaoResult result = userService.userLogin(username, password);
+			return result;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return TaotaoResult.build(500, ExceptionUtil.getStackTrace(e));
+		}
+	}
+```
 
+Service
 
+```java
+	/**
+	 * 用户登陆
+	 */
+	@Override
+	public TaotaoResult userLogin(String username, String password) {
+		TbUserExample example = new TbUserExample();
+		Criteria criteria = example.createCriteria();
+		criteria.andUsernameEqualTo(username);
+		List<TbUser> list = userMapper.selectByExample(example);
+		//如果没有此用户名
+		if(null == list || list.size() == 0){
+			return TaotaoResult.build(400, "用户名或密码错误");
+		}
+		//比对密码
+		TbUser user = list.get(0);
+		if(!DigestUtils.md5DigestAsHex(password.getBytes()).equals(user.getPassword())){
+			return TaotaoResult.build(400, "用户名或密码错误");
+		}
+		//清除密码
+		user.setPassword(null);
+		//生成token
+		String token = UUID.randomUUID().toString();
+		//把用户信息写入redis
+		
+		jedisClient.set(REDIS_USER_SESSION_KEY+":"+token, JsonUtils.objectToJson(user));      //key分组命名
+		//设置session的过期时间
+		jedisClient.expire(REDIS_USER_SESSION_KEY+":"+token, SSO_SESSION_EXPIRE);     
+		
+		return TaotaoResult.ok(token);    //最终返回一个token
+	}
+```
 
-M：这些只提供了注册登录功能，单点的特性呢？
+把用户信息存进redis表示已经登录，然后返回一个token便于调用。
 
+D：怎么实现调用``127.0.0.1:8084/user/token/{token}``返回redis上用户信息的接口呢？   
 
+Z：通过Get请求，传token去redis中请求用户数据
 
+Controller
 
+```java
+	@RequestMapping(value="/token/{token}")    //支持get请求
+	@ResponseBody
+	public Object getUserByToken(@PathVariable String token, String callback){  //获取url的token值
+		TaotaoResult result = null;
+		try {
+			result = userService.getUserByToken(token);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = TaotaoResult.build(500, ExceptionUtil.getStackTrace(e));
+		}
+		if(StringUtils.isEmpty(callback)){  //非json调用
+			return result;    //直接返回对象
+		}else{
+			MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(result);
+			mappingJacksonValue.setJsonpFunction(callback);
+			return mappingJacksonValue;   //返回callback对象
+		}
+	}
+```
 
-  
+Service
 
+```java
+	/**
+	 * 获取用户信息
+	 */
+	@Override
+	public TaotaoResult getUserByToken(String token) {
+		String userStr = jedisClient.get(REDIS_USER_SESSION_KEY+":"+token);
+		if(StringUtils.isNotEmpty(userStr)){
+			//延长过期时间
+			jedisClient.expire(REDIS_USER_SESSION_KEY+":"+token, SSO_SESSION_EXPIRE);     
+			return TaotaoResult.ok(JsonUtils.jsonToPojo(userStr, TbUser.class));
+		}
+		return TaotaoResult.build(400, "此session已过期，请重新登录");
+	}
+```
+
+获取用户信息，每请求一次就延长token时间。
+
+M：到这里，sso项目就实现了注册，校验，登录，获取用户信息的接口。

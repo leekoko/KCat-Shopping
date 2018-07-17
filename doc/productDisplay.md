@@ -96,7 +96,56 @@ Z：也是生成TotaoResule对象，不过改为传状态码和信息，不传�
 
 D：接口已经有了，怎么使用接口数据进行页面展示呢？
 
-Z：portal项目是用来展示页面的项目，loading
+Z：portal项目是用来展示页面的项目，展示页面用到item对象，创建对应的pojo对象。
+
+html调用
+
+```javascript
+	var itemControl = {
+			param:{
+				descUrl:"/item/desc/",
+				paramUrl:"/item/param/"
+			},
+			//请求商品描述
+			getItemDesc:function(itemId) {
+				$.get(itemControl.param.descUrl+itemId+".html", function(data){
+					//返回商品描述的html，直接显示到页面
+					$("#item-desc").append(data);
+				});
+			},
+			//参数请求flag
+			haveParam:false,
+			//请求规格参数
+			getItemParam:function(itemId) {
+				//如果没有查询过规格参数，就做请求
+				if (!itemControl.haveParam) {
+					$.get(itemControl.param.paramUrl+itemId+".html", function(data){
+						//返回商品规格的html，直接显示到页面
+						$("#product-detail-2").append(data);
+						//更改flag状态
+						itemControl.haveParam = true;
+					});
+				}
+			}
+	};
+```
+
+Controller返回商品信息和规格参数。
+
+```java
+	@RequestMapping(value="/item/desc/{id}", produces=MediaType.TEXT_HTML_VALUE+";charset=utf-8")
+	@ResponseBody
+	public String showItemDesc(@PathVariable Long id) throws Exception {
+		//取商品描述
+		TbItemDesc itemDesc = itemService.geTbItemDescById(id);
+		//返回商品描述信息
+		return itemDesc.getItemDesc();
+	}
+```
+
+
+
+D：
 
 
 

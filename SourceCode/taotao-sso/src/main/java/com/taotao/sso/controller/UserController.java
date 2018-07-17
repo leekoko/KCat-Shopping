@@ -6,6 +6,7 @@ import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.taotao.common.pojo.TaotaoResult;
@@ -63,15 +64,49 @@ public class UserController {
 	}
 	
 	//创建用户
-	@RequestMapping("/register")
+	@RequestMapping(value="/register",method=RequestMethod.POST)    //仅支持post，不添加都支持
 	@ResponseBody
 	public TaotaoResult createUser(TbUser user){
 		try {
 			TaotaoResult result = userService.createUser(user);
 			return result;
 		} catch (Exception e) {
+			e.printStackTrace();
 			return TaotaoResult.build(500, ExceptionUtil.getStackTrace(e));
 		}
+	}
+	
+	//用户登陆
+	@RequestMapping(value="/login",method=RequestMethod.POST)    //仅支持post，不添加都支持
+	@ResponseBody
+	public TaotaoResult userLogin(String username, String password){
+		try {
+			TaotaoResult result = userService.userLogin(username, password);
+			return result;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return TaotaoResult.build(500, ExceptionUtil.getStackTrace(e));
+		}
+	}
+	
+	@RequestMapping(value="/token/{token}")    //支持get请求
+	@ResponseBody
+	public Object getUserByToken(@PathVariable String token, String callback){  //获取url的值
+		TaotaoResult result = null;
+		try {
+			result = userService.getUserByToken(token);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = TaotaoResult.build(500, ExceptionUtil.getStackTrace(e));
+		}
+		if(StringUtils.isEmpty(callback)){  //非json调用
+			return result;    //直接返回对象
+		}else{
+			MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(result);
+			mappingJacksonValue.setJsonpFunction(callback);
+			return mappingJacksonValue;   //返回callback对象
+		}
+
 	}
 	
 }
