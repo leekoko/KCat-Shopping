@@ -109,4 +109,9 @@ public class UserController {
 
 	}
 	
+	@RequestMapping("showLogin")
+	public String showLogin(){
+		return "/login";
+	}
+	
 }
