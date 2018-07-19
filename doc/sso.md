@@ -309,13 +309,132 @@ Z：使用对象.方法的方式，把jq方法组织起来，校验、查复、�
 
 D：`` REGISTER.param.surl``这段代码获取到的是什么？
 
-
-
-
-
-
+Z：当校验用户的系统不在同一台机子上，可以声明`` REGISTER.param.surl``的值进行跨服务器访问。
 
 D：检查用户方法check的``escape($("#regName").val())+"/1?r=" + Math.random()``有什么作用？
+
+Z：escape可以对字符串进行编码，这样就可以在所有的计算机上读取该字符串。而加上随机数可以防止被浏览器缓存，从而重复提交。
+
+D：这段jq代码是怎么防止用户快速点击提交的。
+
+Z：先进行重复性校验，然后使用每次随机数的方式，处理因为缓存通过校验问题。
+
+D：我想登录成功之后跳转到某个页面，怎么实现呢？
+
+Z：首先进入跳转页面的Controller的时候，把跳转地址作为参数传过去``http://localhost:8084/page/login?redirect=http://github.com/leekoko``  
+
+```java
+	@RequestMapping("/login")
+	public String showLogin(String redirect, Model model){
+		model.addAttribute("redirect", redirect);
+		return "login";
+	}
+```
+
+在前端进行账号密码验证，通过之后就会跳到``redirect``参数的地址
+
+```javascript
+			doLogin:function() {
+				$.post("/user/login", $("#formlogin").serialize(),function(data){
+					if (data.status == 200) {
+						alert("登录成功！");
+						if (redirectUrl == "") {
+							location.href = "http://localhost:8081";
+						} else {
+							location.href = redirectUrl;
+						}
+					} else {
+						alert("登录失败，原因是：" + data.msg);
+						$("#loginname").select();
+					}
+				});
+			},
+```
+
+D：系统是怎么发现你现在是登录状态的呢？
+
+Z：登录的时候将token存进cookie中，然后到首页的时候前端拿着cookie里的cookie，去请求用户信息。
+
+存入cookie
+
+```java
+	/**
+	 * 用户登陆
+	 */
+	@Override
+	public TaotaoResult userLogin(String username, String password, HttpServletRequest request, HttpServletResponse response) {
+...
+		
+		jedisClient.set(REDIS_USER_SESSION_KEY+":"+token, JsonUtils.objectToJson(user));      //key分组命名
+		//设置session的过期时间
+		jedisClient.expire(REDIS_USER_SESSION_KEY+":"+token, SSO_SESSION_EXPIRE);     
+		
+		//添加写cookie的逻辑
+		CookieUtils.setCookie(request, response, "TT_TOKEN", token);
+		
+		return TaotaoResult.ok(token);   //最终返回一个token
+	}
+```
+
+前端获取cookie里的token，做请求
+
+```javascript
+var TT = TAOTAO = {
+	checkLogin : function(){
+		var _ticket = $.cookie("TT_TOKEN");
+		if(!_ticket){
+			return ;
+		}
+		$.ajax({
+			url : "http://localhost:8084/user/token/" + _ticket,
+			dataType : "jsonp",
+			type : "GET",
+			success : function(data){
+				if(data.status == 200){
+					var username = data.data.username;
+					var html = username + "，欢迎来到淘淘！<a href=\"http://www.taotao.com/user/logout.html\" class=\"link-logout\">[退出]</a>";
+					$("#loginbar").html(html);
+				}
+			}
+		});
+	}
+}
+
+$(function(){
+	// 查看是否已经登录，如果已经登录查询登录信息
+	TT.checkLogin();
+});
+```
+
+拿到token之后就可以往redis里面请求用户信息，调用之前的redis获取用户信息接口
+
+```java
+	@RequestMapping(value="/token/{token}")    //支持get请求
+	@ResponseBody
+	public Object getUserByToken(@PathVariable String token, String callback){  //获取url的值
+		TaotaoResult result = null;
+		try {
+			result = userService.getUserByToken(token);
+		} catch (Exception e) {
+			e.printStackTrace();
+			result = TaotaoResult.build(500, ExceptionUtil.getStackTrace(e));
+		}
+		if(StringUtils.isEmpty(callback)){  //非json调用
+			return result;    //直接返回对象
+		}else{
+			MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(result);
+			mappingJacksonValue.setJsonpFunction(callback);
+			return mappingJacksonValue;   //返回callback对象
+		}
+
+	}
+```
+
+
+
+
+
+
 
 
 
