@@ -367,9 +367,7 @@ Z：登录的时候将token存进cookie中，然后到首页的时候前端拿�
 		
 		jedisClient.set(REDIS_USER_SESSION_KEY+":"+token, JsonUtils.objectToJson(user));      //key分组命名
 		//设置session的过期时间
-		jedisClient.expire(REDIS_USER_SESSION_KEY+":"+token, SSO_SESSION_EXPIRE);     
-		
-		//添加写cookie的逻辑
+		jedisClient.expire(REDIS_USER_SESSION_KEY+":"+token, SSO_SESSION_EXPIRE);		 //添加写cookie的逻辑
 		CookieUtils.setCookie(request, response, "TT_TOKEN", token);
 		
 		return TaotaoResult.ok(token);   //最终返回一个token
@@ -428,6 +426,121 @@ $(function(){
 		}
 
 	}
+```
+
+M：``CookieUtils.setCookie(request, response, "TT_TOKEN", token);``添加cookie的逻辑是怎么样的？
+
+Z：如下代码:设定cookie名，cookie值，域名信息。放进response里。
+
+```java
+    /**
+     * 设置Cookie的值，并使其在指定时间内生效
+     * 
+     * @param cookieMaxage cookie生效的最大秒数
+     */
+    private static final void doSetCookie(HttpServletRequest request, HttpServletResponse response,
+            String cookieName, String cookieValue, int cookieMaxage, String encodeString) {
+        try {
+            if (cookieValue == null) {
+                cookieValue = "";
+            } else {
+                cookieValue = URLEncoder.encode(cookieValue, encodeString);
+            }
+            Cookie cookie = new Cookie(cookieName, cookieValue);  //"TT_TOKEN"   token
+            if (cookieMaxage > 0)
+                cookie.setMaxAge(cookieMaxage);
+            if (null != request) {// 设置域名的cookie
+            	String domainName = getDomainName(request);
+            	System.out.println(domainName);
+                if (!"localhost".equals(domainName)) {
+                	cookie.setDomain(domainName);
+                }
+            }
+            cookie.setPath("/");
+            response.addCookie(cookie);
+        } catch (Exception e) {
+        	 e.printStackTrace();
+        }
+    }
+```
+
+D：怎么做到当用户访问指定页面时，实现强制登录呢？
+
+Z：用到拦截器，拦截器写在展示页面项目中，实现接口``implements HandlerInterceptor``
+
+M：拦截器怎么拦截指定访问路径呢？
+
+Z：？？？？？？？？？？
+
+D：拦截器拦截url的写法？
+
+Z：在handle之前执行拦截方法
+
+```java
+	@Autowired
+	private UserServiceImpl userService;    //注入实现类，才能取到具体参数
+	
+...
+	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object arg2) throws Exception {
+		//handler执行之前
+		//从cookie中取token
+		String token = CookieUtils.getCookieValue(request, "TT_TOKEN");
+		//取用户信息
+		TbUser user = userService.getUserByToken(token);
+		//取不到用户跳转到登录页面
+		if(user == null){
+			response.sendRedirect(userService.SSO_BASE_URL + userService.SSO_PAGE_LOGIN 
+					+ "?redirect=" + request.getRequestURL());  //获取拦截的url
+			//不继续执行
+			return false;
+		}
+		//取到用户信息继续执行
+		return true;    //返回值决定handler是否执行
+	}
+
+```
+
+HttpClient通过拿token调用sso服务获取用户信息，获取得到就执行被拦截方法，获取不到就不执行。
+
+而调用服务方法，还有跳转路径通过``UserServiceImpl``注入类注入进来
+
+M：``String token = CookieUtils.getCookieValue(request, "TT_TOKEN");``CookieUtils到底在request中做了什么？
+
+Z：如下代码
+
+```java
+    /**
+     * 得到Cookie的值,
+     * 
+     * @param request
+     * @param cookieName
+     * @return
+     */
+    public static String getCookieValue(HttpServletRequest request, String cookieName, boolean isDecoder) {
+        //从request中获取所有Cookie
+        Cookie[] cookieList = request.getCookies();
+        if (cookieList == null || cookieName == null) {
+            return null;
+        }
+        String retValue = null;
+        try {
+            for (int i = 0; i < cookieList.length; i++) {
+                //匹配拿到指定的Cookie
+                if (cookieList[i].getName().equals(cookieName)) {
+                    if (isDecoder) {
+                        retValue = URLDecoder.decode(cookieList[i].getValue(), "UTF-8");
+                    } else {
+                        //返回Cookie的值
+                        retValue = cookieList[i].getValue();
+                    }
+                    break;
+                }
+            }
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return retValue;
+    }
 ```
 
 
