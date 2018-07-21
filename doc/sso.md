@@ -468,10 +468,6 @@ D：怎么做到当用户访问指定页面时，实现强制登录呢？
 
 Z：用到拦截器，拦截器写在展示页面项目中，实现接口``implements HandlerInterceptor``
 
-M：拦截器怎么拦截指定访问路径呢？
-
-Z：？？？？？？？？？？
-
 D：拦截器拦截url的写法？
 
 Z：在handle之前执行拦截方法
@@ -542,6 +538,115 @@ Z：如下代码
         return retValue;
     }
 ```
+
+M：拦截器怎么拦截指定访问路径呢？
+
+Z：在springmvc.xml中将url配置给拦截器类
+
+```xml
+	<!-- 拦截配置 -->
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<!-- 拦截订单请求 -->
+			<mvc:mapping path="/item/**"/>
+			<bean class="com.taotao.portal.interceptor.LoginInterceptor"/>
+		</mvc:interceptor>
+	</mvc:interceptors>
+```
+
+
+
+M：添加商品到购物车，要怎么实现呢？
+
+Z：通过操作Cookie来实现(可以减少数据库的压力)，当点击收藏，将查到的商品信息转化为json存进cookie中，如果已有商品，则数量+1
+
+```java
+	@Override
+	public TaotaoResult aadCartItem(long itemId, int num, 
+			HttpServletRequest request, HttpServletResponse response) {
+		CartItem cartItem = null;
+		//获取Cookie中的信息
+		List<CartItem> list = getCartList(request);
+		for (CartItem cItem : list) {
+			if(cItem.getId() == itemId){
+				cItem.setNum(cItem.getNum() + num);
+				cartItem = cItem;
+				break;
+			}
+		}
+		if(cartItem == null){
+			//根据id查询商品信息
+			String json = HttpClientUtil.doGet(REST_BASE_URL + ITEM_INFO_URL + itemId);
+			//把json转化为java对象
+			TaotaoResult result = TaotaoResult.formatToPojo(json, TbItem.class);
+			if(result.getStatus() == 200){
+				TbItem item = (TbItem) result.getData();
+				//将不需要的信息进行精简,创建一个新的pojo
+				cartItem.setId(itemId);
+				cartItem.setImage(item.getImage());
+				cartItem.setNum(1);
+				cartItem.setPrice(item.getPrice());
+				cartItem.setTitle(item.getTitle());
+			}
+			
+		}
+		list.add(cartItem);
+		CookieUtils.setCookie(request, response, "TT_CART", JsonUtils.objectToJson(list),true);
+		return TaotaoResult.ok();
+	}
+
+	private List<CartItem> getCartList(HttpServletRequest request) {
+		
+		String json = CookieUtils.getCookieValue(request, "TT_CART", true);
+		if(StringUtils.isEmpty(json)){
+			return new ArrayList<>();
+		}
+		try {
+			List<CartItem> list = JsonUtils.jsonToList(json, CartItem.class);
+			return list;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return new ArrayList<>();
+	}
+```
+
+D：那要怎么展示购物车列表呢？
+
+Z：在跳转购物车页面的时候将cookie的信息取出来
+
+D：前面添加购物车的时候，如果刷新add方法的链接，会重复进行添加，怎么处理。
+
+Z：将页面链接和添加逻辑分离开来
+
+```java
+	@RequestMapping("/add/{itemId}")
+	public String addCartItem(@PathVariable Long itemId, @RequestParam(defaultValue = "1")Integer num,
+			HttpServletRequest request, HttpServletResponse response){
+		TaotaoResult result = cartService.aadCartItem(itemId, num, request, response);
+		//return "cartSuccess";
+		return "redirect:/cart/success.html";   //重定义绝对路径
+	}
+	
+	@RequestMapping("/success")
+	public String showSuccess(HttpServletRequest request, HttpServletResponse response){
+		return "cartSuccess";
+	}
+```
+
+D：为什么要使用``return "redirect:/cart/success.html";``绝对路径呢?
+
+Z：因为我要调用的是本Controller的请求方法，而不是页面，所以用绝对路径来请求Controller，这样做可以将浏览器的链接变成``cart/success.html``   
+
+而``cart/success.html``调用的则存储是一个跳转页面方法。
+
+M：购物车的数量怎么进行调整呢？
+
+Z：请求添加购物车方法，把num设置为+1，-1
+
+``/cart/add/"+_thisInput.attr("itemId") + ".html?num=-1``
+
+
 
 
 

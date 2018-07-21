@@ -7,21 +7,12 @@
         http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
         http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
 
-	<context:component-scan base-package="com.taotao.portal.controller" />
+	<context:component-scan base-package="com.taotao.order.controller" />
 	<mvc:annotation-driven />
 	<bean
 		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
 		<property name="prefix" value="/WEB-INF/jsp/" />
 		<property name="suffix" value=".jsp" />
 	</bean>
-	<!-- 拦截配置 -->
-	<mvc:interceptors>
-		<mvc:interceptor>
-			<!-- 拦截订单请求 -->
-			<mvc:mapping path="/item/**"/>
-			<bean class="com.taotao.portal.interceptor.LoginInterceptor"/>
-		</mvc:interceptor>
-	</mvc:interceptors>
-	
 
 </beans>
