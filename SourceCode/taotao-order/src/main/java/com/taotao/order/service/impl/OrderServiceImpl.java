@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.omg.CORBA.TCKind;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -62,6 +63,7 @@ public class OrderServiceImpl implements OrderService {
 			//获取订单明细id
 			long orderDetailId = jedisClient.incr(ORDER_GEN_KEY);
 			tbOrderItem.setId(orderDetailId + "");
+			tbOrderItem.setOrderId(orderId + "");
 			//向订单明细插入记录
 			orderItemMapper.insert(tbOrderItem);
 		}
