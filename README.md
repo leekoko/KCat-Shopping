@@ -29,7 +29,9 @@
 
 ### 14.[详情展示页面](doc/productDisplay.md)     
 
-### 15[单点登录](doc/sso.md)   
+### 15[单点登录](doc/sso.md)     
+
+### 16.[nginx](doc/nginx.md)  
 
 
 
