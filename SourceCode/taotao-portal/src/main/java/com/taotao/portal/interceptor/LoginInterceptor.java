@@ -38,27 +38,17 @@ public class LoginInterceptor implements HandlerInterceptor {
 		//handle执行之前
 		//从cookie中取token
 		String token = CookieUtils.getCookieValue(request, "TT_TOKEN");
-		if(StringUtils.isEmpty(token)){
-			//空的表示未登陆      liyb不知对不
-			response.sendRedirect(userService.SSO_BASE_URL + userService.SSO_PAGE_LOGIN 
-					+ "?redirect=" + request.getRequestURL());  //获取拦截的url
-			//不继续执行
-			return false;
-			
-		}
-		
-		
-		
-		//取用户信息
+		//根据token获取用户信息
 		TbUser user = userService.getUserByToken(token);
-		//取不到用户跳转到登录页面
-		if(user == null){
+		
+		if(null == user){
 			response.sendRedirect(userService.SSO_BASE_URL + userService.SSO_PAGE_LOGIN 
 					+ "?redirect=" + request.getRequestURL());  //获取拦截的url
 			//不继续执行
 			return false;
 		}
 		//取到用户信息继续执行
+		request.setAttribute("user", user);   //把用户存进request中，便于后面调用
 		return true;    //返回值决定handle是否执行
 	}
 
