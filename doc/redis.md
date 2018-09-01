@@ -6,7 +6,13 @@ Z:先安装gcc，安装命令：``yum install gcc c++``    ，安装redis。
 
 M:怎么安装redis到服务器？
 
-Z:直接redis源码拖拽到linux上，右键解压（界面操作），命令行进入解压后的目录，``make``执行编译，``make install PREFIX=/usr/local/redis``指定安装的目录进行安装。
+Z:1.下载redis的地址``https://redis.io/download``   
+
+![](../img/re01.png)    
+
+2.将redis上传到linux上，解压，进入解压后的目录。
+
+``make``执行编译，``make install PREFIX=/usr/local/redis``指定安装的目录进行安装。   
 
 M:为什么我安装提示文件夹创建失败？
 
@@ -38,9 +44,9 @@ M:那我要执行redis命令呢？
 
 Z:指定cli进入redis命令模式``./redis-cli``   
 
-​	常用命令：``ping`` ， ``set a 10``  , ``get a``  , 增1``incr a``, 减1``decr a``,  删除a ``del a``  ,列出所有 ``keys *``   
+	常用命令：``ping`` ， ``set a 10``  , ``get a``  , 增1``incr a``, 减1``decr a``,  删除a ``del a``  ,列出所有 ``keys *``   
 
-​	常用数据类型：``String``, ``Hash`` , ``List``, ``Set``, ``SortedSet``    
+	常用数据类型：``String``, ``Hash`` , ``List``, ``Set``, ``SortedSet``    
 
 M:单机版的redis搭建好了，那集群的redis要怎么搭建呢？
 
