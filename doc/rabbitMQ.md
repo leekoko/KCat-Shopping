@@ -22,19 +22,29 @@ Z：安装Erlang，rabbitMQ，启动界面
 
 4. 登录``http://127.0.0.1:15672``即可进去登录界面，默认账号密码都为``guest``   
 
-5. 
+   ![](../img/ra03.png)  
 
+M：怎么设置账号呢？
 
+Z：添加用户，设置路径，设置对应用户  
 
+1. 添加用户
 
+   ![](../img/ra04.png)  
 
+2. 设置访问路径  
 
+   ![](../img/ra05.png)  
 
+3. 点击路径，指定角色，就可以通过用户名登录了
 
+   ![](../img/ra06.png)  
 
-M：那rabbitMQ应该怎么部署呢? 
+   ![](../img/ra07.png)    
 
-### Erlang
+（07视频继续深入理解）
+
+### linux下Erlang安装  
 
 Z：首先需要安装erlang  
 
@@ -61,7 +71,7 @@ M：怎么看erlang是否安装成功呢？
 
 Z：进入erlang的/bin目录，执行``./erl``出现Erlang的相关信息即可，输入``halt().``可退出界面。
 
-### rabbitMQ 
+### linux下rabbitMQ安装  
 
 Z：接下来安装rabbitMQ
 
@@ -90,29 +100,4 @@ M：那怎么关闭服务呢？
 
 Z：命令`` ./rabbitmqctl stop``   
 
-### 配置网页插件   
-
-https://www.cnblogs.com/bobc/p/8427921.html
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+(出错暂停)
