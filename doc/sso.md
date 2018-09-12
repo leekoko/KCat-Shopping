@@ -644,15 +644,9 @@ M：购物车的数量怎么进行调整呢？
 
 Z：请求添加购物车方法，把num设置为+1，-1
 
-``/cart/add/"+_thisInput.attr("itemId") + ".html?num=-1``
+``/cart/add/"+_thisInput.attr("itemId") + ".html?num=-1``   
 
+M：``List<TbUser> list = userMapper.selectByExample(example);``这里的userMapper直接使用的是接口，而mybatis的xml使用的是taotao-manage的，通过maven依赖过来。但是在lib里找不到，是没有打jar包过来的吗？  
 
-
-
-
-
-
-
-
-
+Z：有，jar包里存在mapper，并且还能打开。   
 
