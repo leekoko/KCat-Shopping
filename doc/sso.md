@@ -650,3 +650,4 @@ M：``List<TbUser> list = userMapper.selectByExample(example);``这里的userMap
 
 Z：有，jar包里存在mapper，并且还能打开。   
 
+M：直接访问``http://localhost:8080/service/user/doLogin?r=0.5910478177075487``返回``该服务没有了，以后别调用了，请访问ssoquery.taotao.com或dubbo中的服务。``,暂时原因不详。   
