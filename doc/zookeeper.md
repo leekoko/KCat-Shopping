@@ -1,4 +1,38 @@
-# zookeeper
+# dubbo&zookeeper
+
+M：系统间要互相调用有什么访问方式呢？
+
+Z：有三种访问方式
+
+1. 可以ajax直接调用另一个项目的Controller，只能访问外网，而且存在跨域的问题。
+
+   ![](../img/d01.png)    
+
+2. 在Controller中使用HttpClient访问，内网外网都能访问。http协议是一个短连接，只访问一次。
+
+   ![](../img/d01.png)  
+
+3. RPC，远程过程调用协议。使用长连接方式。
+
+   ![](../img/d03.png)  
+
+
+
+1106视频
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
 
 M：怎么安装zookeeper呢?
 
