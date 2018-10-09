@@ -60,9 +60,9 @@ M：怎么设置zookeeper的端口呢？
 
 Z：这里默认的是2181``clientPort=2181``   
 
-#### 程序中使用dubbo的RPC  
+#### 提供者搭建  
 
-M：搭建dubbo的步骤？
+M：搭建dubbo提供者的步骤？
 
 Z：首先创建maven工程，引入dubbo   
 
@@ -125,7 +125,7 @@ M：在依赖dubbo中，为什么要排除传递spring依赖？
 
 Z：因为dubbo中本来就依赖了spring，但是版本太旧，所以需要进行排除，再手动依赖。   
 
-M：dubbo架构的项目中需要上面类呢？
+M：dubbo架构的项目中需要什么类呢？
 
 Z：1.model类，2.接口类，3.接口impl实现类   
 
@@ -246,13 +246,70 @@ web.xml
 
 M：为什么我引入dubbo-service.xml之后发生报错呢？
 
-Z：缺少XML结构定义文件   ...  loading
+Z：可能是缺少XML结构定义文件xsd，添加即可。idea对地址报错，添加报错地址到Settings - Schemas and DTDs - Ignored Schemas and DTDs中即可。
 
+M：有了类和配置文件，怎么将服务注册到注册中心呢？
 
+Z：直接在Tomcat运行该项目即可。
 
+#### 消费者搭建
 
+M：消费者搭建需要什么呢？
 
+Z：与提供者相同（1.model类，2.接口类，3.dubbo配置文件），只是无需web.xml文件和ServiceImpl实现类，而且dubbo-consumer.xml做了改动
 
+```xml
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+	http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
 
+    <!-- 提供方应用信息，用于计算依赖关系 -->
+    <dubbo:application name="dubbo-a-consumer" />
 
+    <!-- 这里使用的注册中心是zookeeper -->
+    <dubbo:registry address="zookeeper://127.0.0.1:2181" client="zkclient"/>
+
+    <!-- 从注册中心中查找服务 -->
+    <dubbo:reference id="userService" interface="cn.itcast.dubbo.service.UserService"/>
+
+</beans>
+```
+
+提供者是用``<dubbo:service>``对接口进行暴露，而消费者是通过``<dubbo:reference>``寻找对应接口。
+
+M：那要怎么实现提供者和消费者之间的连通呢？
+
+Z：打开zookeeper，注册服务和消费服务
+
+1. 打开zookeeper
+
+2. 运行提供者的tomcat，实现服务的注册
+
+3. 通过dubbo注入Service接口，实现相应查询功能，这里通过单元测试
+
+   ```java
+       private UserService userService;
+   
+       @org.junit.Before
+       public void setUp() throws Exception {
+           //UserService初始化
+           ApplicationContext applicationContext = new ClassPathXmlApplicationContext("classpath:dubbo/dubbo-*.xml");
+           this.userService = applicationContext.getBean(UserService.class);
+       }
+   
+       @org.junit.Test
+       public void queryAll() {
+           List<User> list = this.userService.queryAll();
+           for (User user : list) {
+               System.out.println(user);
+           }
+       }
+   ```
+
+   如果能打印对象，即调用消费者服务成功。
 
