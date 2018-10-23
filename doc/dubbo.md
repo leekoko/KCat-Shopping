@@ -314,13 +314,4 @@ Z：打开zookeeper，注册服务和消费服务
    如果能打印对象，即调用消费者服务成功。
 
 
-Z：更多详情查看[dubbo官网文档](dubbo用户指南.mht)  
-
-
-
-
-
-
-
-
-
+Z：更多详情查看[dubbo官网文档](dubbo用户指南.mht)  ，[Demo代码](../Demo/my_dubbo)  
