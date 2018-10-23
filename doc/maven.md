@@ -64,8 +64,6 @@ Z：
   - 父工程使用pom   
   - 被依赖的项目用jar  
 
-
-
 ## 3.pom.xml文件解析  
 
 pom.xml文件用来配置版本信息，告诉程序需要去下载哪些jar包  
@@ -253,6 +251,7 @@ _像个规划的，只管是哪个版本的，还没去仓库拿插件_
 	</dependencyManagement>
 ```
 
+- dependencyManagement标签说明依赖由其管理
 - 组件名称（Group Id，Artifact Id，同2-2），${XX.version}引用上方的版本号    
 
 
