@@ -56,7 +56,15 @@ Z：缺漏了一些命令，需要分别进行安装。
 
 M：怎么停止nginx进程呢？
 
-Z：除了可以直接kill掉，还可以使用``./nginx -s quit``停止   
+Z：除了可以直接kill掉，还可以使用``./nginx -s quit``停止，win下用``nginx.exe -s stop``  
+
+M：win下怎么用命令启动nginx呢？
+
+Z：``start nginx.exe``   
+
+M：如果我修改了ngixn配置文件，怎么重新加载呢？
+
+Z：win下用``nginx.exe -s reload``  
 
 ### 高可用   
 
@@ -71,8 +79,8 @@ events {
     worker_connections  1024;
 }
 
-
-http {
+# 所有请求都会进入http
+http {  
     include       mime.types;
     default_type  application/octet-stream;
 	# 设置每个节点超时时间
@@ -83,9 +91,13 @@ http {
     keepalive_timeout  65;
 
     server {
+    	# 后台系统域名	server_name xxx.xxx.com
+    	 
+    	# 监听80端口
         listen 80;
+        # 所有的请求 / 
         location / {
-        	# 指向结点组
+        	# 指向地址组
 			proxy_pass http://tomcat_server_pool;   
         }
     }
@@ -112,3 +124,4 @@ Z：location的位置
         }
 
 ```
+
