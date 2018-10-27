@@ -1,30 +1,93 @@
-# 单点登录   
+# 单点登录 （深入理解，重新整理，减法方式ing）  
 
-Z：session共享可以处理tomcat集群时，session不一致，导致重复登录的问题。
+_2018-10-27修改_
 
-D：系统分布式部署的时候，session不能用session共享的方式，怎么做？
+M：普通的项目实现登录的方式？
 
-Z：将session放在redis中，设置key的生存时间。  
+Z：登录之后该用户的信息就会保存到session中，根据session的信息就能判断用户是否登录
 
-所以我们需要添加一个单点登录的服务，来构造SSO登录框架
+![](../img/s01.png)  
 
-![](../img/p32.png)  
+M：session具体是什么东西呢？
 
-M：这个系统需要有什么功能？
+Z：session是保存在服务端的数据结构，当用户成功登录的时候，服务器就会将用户数据存入session中，然后将session ID返回给客户端。
 
-Z：它要实现以下几个接口   
+服务端保存Session的方法很多，内存、数据库、文件都有，甚至还有session服务器集群。
 
--  登录接口
+```java
+session.setAttribute("uname", uname);
+```
+
+M：那cookie跟session有什么关系呢？
+
+Z：session是存在服务器上的，服务器上许多不同用户的session。要怎么区分开呢？主要就是根据session ID，服务器将session ID分发到不同的客户端上，存进客户端的cookie中。
+
+```java
+        Cookie cookie = new Cookie("JSESSIONID",session.getId());
+        cookie.setMaxAge(2*7*24*3600);
+        // 需要response对象，将Cookie写入本地浏览器
+        response.addCookie(cookie);
+```
+
+而客户端在之后的请求中，就会把cookie发送到服务端，服务端就知道该用户是谁了。
+
+M：那如果我浏览器禁止了cookie，session不就失效了吗？
+
+Z：可以通过其他方式解决，例如在请求的url中传递session ID过去
+
+M：那如果我们现在采用的是分布式系统，一个系统知道你是哪个session，其他系统不知道，这种情况该怎么解决呢？
+
+Z：这就要实现session的共享，常用的方式如下：
+
+1. 客户端Cookie保存
+
+   因为问题是多个系统没法获取到同一个session，那干脆就把session扔到客户端上。这样不管客户端访问哪个系统，都会把用户信息带过去。
+
+   缺点1：但是由于用户信息在客户端的Cookie上，如果客户自己修改Cookie，那不就可以随意篡改系统数据了。所以还需要额外对Cookie中的session信息进行加密。
+
+   缺点2：客户端每次访问都要带着大量的session信息，占用了带宽。
+
+   缺点3：http信息头限制Cookie信息的长度。
+
+2. 服务器间复制session
+
+   用户在主服务器登录，主服务器使用脚本或守护进程方式，将session传递到从服务器中。
+
+   缺点1：如果主服务器挂了，其他从服务器将登录不了。
+
+   缺点2：如果访问比较密集，还没来得及复制，会导致重复登录的情况。
+
+3. 数据库存储session
+
+   因为不同的系统访问同一个数据库。session存入数据库中，每次请求就去查询一次数据库。
+
+   缺点1：对数据库要求比较高
+
+   缺点2：需要额外实现session，更新删除代码，增加工作量
+
+   本文主要介绍的是这种方式，使用redis代替关系数据库。而redis也能方便设置session的生存时间，更新等操作。
+
+Z：对于用redis来存储session信息，将由单独一个系统来完成，那就是sso服务层
+
+	![](../img/p32.png)    
+
+	sso服务层主要是提供功能接口：
+
+- 登录接口
 
 - 注册接口
 
-
 - 查询接口
-
 
 - 退出登录接口  
 
-D：做注册接口的时候，要对用户注册信息唯一性进行验证，用什么方式进行验证呢？
+---
+
+下面是代码示例：
+
+### 1.注册接口
+
+D：做 **注册接口** 的时候，要对用户注册信息唯一性进行验证，用什么方式进行验证呢？
 
 Z：通过将用户注册信息传到数据库进行匹配，参数缺陷、已有参数不让注册
 
@@ -112,9 +175,11 @@ D：注册接口已经做好，但是没有前端页面，怎么对其进行测�
 
 Z：使用post请求的工具RESTClient，模拟前端页面
 
-![](../img/p33.png)  
+![](D:/github_place/KCat-Shopping/img/p33.png)  
 
 表单的Content-Type为application/x-www-form-urlencoded，添加表单参数即可模拟POST请求。
+
+### 2.登录接口
 
 D：登陆需要做什么动作呢？
 
@@ -168,11 +233,17 @@ Service
 		//设置session的过期时间
 		jedisClient.expire(REDIS_USER_SESSION_KEY+":"+token, SSO_SESSION_EXPIRE);     
 		
-		return TaotaoResult.ok(token);    //最终返回一个token
+		return TaotaoResult.ok(token);    //最终返回一个token（令牌）
 	}
 ```
 
 把用户信息存进redis表示已经登录，然后返回一个token便于调用。
+
+M：token是什么？
+
+Z：token又叫做令牌，只是一个key，用来标识信息所在位置。
+
+### 3.查询接口
 
 D：怎么实现调用``127.0.0.1:8084/user/token/{token}``返回redis上用户信息的接口呢？   
 
@@ -223,93 +294,7 @@ Service
 
 M：到这里，sso项目就实现了注册，校验，登录，获取用户信息的接口。
 
-D：前端注册的jq要怎么实现呢？
-
-Z：使用对象.方法的方式，把jq方法组织起来，校验、查复、注册、跳转
-
-```javascript
-	var REGISTER={
-		param:{
-			//单点登录系统的url
-			surl:""
-		},
-		inputcheck:function(){
-				//不能为空检查
-				if ($("#regName").val() == "") {
-					alert("用户名不能为空");
-					$("#regName").focus();
-					return false;
-				}
-				if ($("#pwd").val() == "") {
-					alert("密码不能为空");
-					$("#pwd").focus();
-					return false;
-				}
-				if ($("#phone").val() == "") {
-					alert("手机号不能为空");
-					$("#phone").focus();
-					return false;
-				}
-				//密码检查
-				if ($("#pwd").val() != $("#pwdRepeat").val()) {
-					alert("确认密码和密码不一致，请重新输入！");
-					$("#pwdRepeat").select();
-					$("#pwdRepeat").focus();
-					return false;
-				}
-				return true;
-		},
-		beforeSubmit:function() {
-				//检查用户是否已经被占用
-				$.ajax({
-	            	url : REGISTER.param.surl + "/user/check/"+escape($("#regName").val())+"/1?r=" + Math.random(),
-	            	success : function(data) {
-	            		if (data.data) {
-	            			//检查手机号是否存在
-	            			$.ajax({
-	            				url : REGISTER.param.surl + "/user/check/"+$("#phone").val()+"/2?r=" + Math.random(),
-				            	success : function(data) {
-				            		if (data.data) {
-					            		REGISTER.doSubmit();
-				            		} else {
-				            			alert("此手机号已经被注册！");
-				            			$("#phone").select();
-				            		}
-				            	}
-	            			});
-	            		} else {
-	            			alert("此用户名已经被占用，请选择其他用户名");
-	            			$("#regName").select();
-	            		}	
-	            	}
-				});
-	            	
-		},
-		doSubmit:function() {
-			$.post("/user/register",$("#personRegForm").serialize(), function(data){
-				if(data.status == 200){
-					alert('用户注册成功，请登录！');
-					REGISTER.login();
-				} else {
-					alert("注册失败！");
-				}
-			});
-		},
-		login:function() {
-			 location.href = "/user/showLogin";
-			 return false;
-		},
-		reg:function() {
-			if (this.inputcheck()) {
-				this.beforeSubmit();
-			}
-		}
-	};
-```
-
-D：`` REGISTER.param.surl``这段代码获取到的是什么？
-
-Z：当校验用户的系统不在同一台机子上，可以声明`` REGISTER.param.surl``的值进行跨服务器访问。
+### 4.前端处理
 
 D：检查用户方法check的``escape($("#regName").val())+"/1?r=" + Math.random()``有什么作用？
 
@@ -351,9 +336,11 @@ Z：首先进入跳转页面的Controller的时候，把跳转地址作为参数
 			},
 ```
 
+### 5.代码应用场景
+
 D：系统是怎么发现你现在是登录状态的呢？
 
-Z：登录的时候将token存进cookie中，然后到首页的时候前端拿着cookie里的cookie，去请求用户信息。
+Z：登录的时候将token存进cookie中，然后到首页的时候前端拿着token里的cookie，去请求用户信息。
 
 存入cookie
 
@@ -554,8 +541,6 @@ Z：在springmvc.xml中将url配置给拦截器类
 	</mvc:interceptors>
 ```
 
-
-
 M：添加商品到购物车，要怎么实现呢？
 
 Z：通过操作Cookie来实现(可以减少数据库的压力)，当点击收藏，将查到的商品信息转化为json存进cookie中，如果已有商品，则数量+1
@@ -651,3 +636,7 @@ M：``List<TbUser> list = userMapper.selectByExample(example);``这里的userMap
 Z：有，jar包里存在mapper，并且还能打开。   
 
 M：直接访问``http://localhost:8080/service/user/doLogin?r=0.5910478177075487``返回``该服务没有了，以后别调用了，请访问ssoquery.taotao.com或dubbo中的服务。``,暂时原因不详。   
+
+M：怎么实现踢人操作？
+
+Z：把session id作为value，登录用户作为session存进cookie中，每次登录进行提取，如果有就将旧的session删除，并且更新session id
