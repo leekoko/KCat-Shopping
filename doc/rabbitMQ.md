@@ -4,10 +4,6 @@ M：rabbitMQ怎么应用到项目中？
 
 Z：MQ使用总结，小案例Demo  loading
 
-
-
-
-
 M：rabbitMQ有什么作用？   
 
 Z：简单来说就是消息队列，负责应用之间的通讯。   
