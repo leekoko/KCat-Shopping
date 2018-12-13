@@ -107,5 +107,3 @@ Z：使用命令``./rabbitmqctl status``
 M：那怎么关闭服务呢？
 
 Z：命令`` ./rabbitmqctl stop``   
-
-(出错暂停)
