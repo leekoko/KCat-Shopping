@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4">
+  <component name="EclipseModuleManager">
+    <conelement value="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER" />
+    <src_description expected_position="0">
+      <src_folder value="file://$MODULE_DIR$/../../LeeS/SourceCode/lees-manager/lees-manager-mapper/src/main/java" expected_position="0" />
+      <src_folder value="file://$MODULE_DIR$/../../LeeS/SourceCode/lees-manager/lees-manager-mapper/src/main/resources" expected_position="1" />
+      <src_folder value="file://$MODULE_DIR$/../../LeeS/SourceCode/lees-manager/lees-manager-mapper/src/test/java" expected_position="2" />
+      <src_folder value="file://$MODULE_DIR$/../../LeeS/SourceCode/lees-manager/lees-manager-mapper/src/test/resources" expected_position="3" />
+    </src_description>
+  </component>
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
+    <output url="file://$MODULE_DIR$/../../LeeS/SourceCode/lees-manager/lees-manager-mapper/target/classes" />
+    <output-test url="file://$MODULE_DIR$/../../LeeS/SourceCode/lees-manager/lees-manager-mapper/target/test-classes" />
+    <content url="file://$MODULE_DIR$/../../LeeS/SourceCode/lees-manager/lees-manager-mapper">
+      <sourceFolder url="file://$MODULE_DIR$/../../LeeS/SourceCode/lees-manager/lees-manager-mapper/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../LeeS/SourceCode/lees-manager/lees-manager-mapper/src/main/resources" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../LeeS/SourceCode/lees-manager/lees-manager-mapper/src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../LeeS/SourceCode/lees-manager/lees-manager-mapper/src/test/resources" type="java-test-resource" />
+      <excludeFolder url="file://$MODULE_DIR$/../../LeeS/SourceCode/lees-manager/lees-manager-mapper/target" />
+    </content>
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="library" name="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER" level="application" />
+    <orderEntry type="module" module-name="lees-manager-pojo" />
+    <orderEntry type="library" name="Maven: org.mybatis:mybatis:3.2.8" level="project" />
+    <orderEntry type="library" name="Maven: org.mybatis:mybatis-spring:1.2.2" level="project" />
+    <orderEntry type="library" name="Maven: com.github.miemiedev:mybatis-paginator:1.2.15" level="project" />
+    <orderEntry type="library" name="Maven: org.slf4j:slf4j-api:1.7.2" level="project" />
+    <orderEntry type="library" name="Maven: mysql:mysql-connector-java:5.1.32" level="project" />
+    <orderEntry type="library" name="Maven: com.alibaba:druid:1.0.9" level="project" />
+    <orderEntry type="module-library">
+      <library name="Maven: com.alibaba:jconsole:1.8.0">
+        <CLASSES>
+          <root url="jar://C:/Program Files/Java/jdk1.8.0_92/lib/jconsole.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="Maven: com.alibaba:tools:1.8.0">
+        <CLASSES>
+          <root url="jar://C:/Program Files/Java/jdk1.8.0_92/lib/tools.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="lees-common" />
+    <orderEntry type="library" name="Maven: org.apache.commons:commons-lang3:3.3.2" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.4.2" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.4.0" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-core:2.4.2" level="project" />
+  </component>
+</module>
